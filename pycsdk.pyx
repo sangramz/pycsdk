@@ -1,5 +1,6 @@
 import os
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from libc.stdlib cimport malloc, free
 
 cdef class CSDK:
     cdef HIMGFILE pHIMGFILE
@@ -7,7 +8,12 @@ cdef class CSDK:
     cdef readonly int page_count
     cdef readonly int zone_count
     cdef readonly unsigned int current_page
+    cdef readonly int sizex
+    cdef readonly int sizey
+    cdef readonly int dpix
+    cdef readonly int dpiy
     cdef RECERR err_code
+    cdef ZONE zone
     scanned = False
 
     def __cinit__(self, license_file, license_key):
@@ -23,9 +29,9 @@ cdef class CSDK:
         if self.err_code != 0:
             raise Exception("OmniPage: initialization error: {:08x}".format(self.err_code))
         # set Decomp method
-        self.err_code = kRecSetNongriddedTableDetect(0, 1)
-        if self.err_code != 0:
-            raise Exception("OmniPage: SetNongriddedTableDetect error: {:08x}".format(self.err_code))
+        # self.err_code = kRecSetNongriddedTableDetect(0, 1)
+        # if self.err_code != 0:
+        #     raise Exception("OmniPage: SetNongriddedTableDetect error: {:08x}".format(self.err_code))
         # # Set single column mode
         # self.err_code = kRecSetForceSingleColumn(0, 1)
         # if self.err_code != 0:
@@ -66,6 +72,14 @@ cdef class CSDK:
         self.err_code = kRecLoadImg(0, self.pHIMGFILE, &self.hPAGE, page_number)
         if self.err_code != 0:
             raise Exception("OmniPage: image load error: {:08x}".format(self.err_code))
+        cdef IMG_INFO imginf
+        self.err_code = kRecGetImgInfo(0, self.hPAGE, II_CURRENT, &imginf)
+        if self.err_code != 0:
+            raise Exception("OmniPage: image info error: {:08x}".format(self.err_code))
+        self.sizex = imginf.Size.cx
+        self.sizey = imginf.Size.cy
+        self.dpix = imginf.DPI.cx
+        self.dpiy = imginf.DPI.cy
         self.current_page = page_number
 
     def find_zones(self):
@@ -89,18 +103,17 @@ cdef class CSDK:
         return self.get_zones()
 
     def get_zones(self):
-        cdef ZONE zone
         zone_list = []
         # Iterate through the zones, building a python list
         for x in range(self.zone_count):
-            self.err_code = kRecGetZoneInfo(self.hPAGE, II_CURRENT, &zone, x)
+            self.err_code = kRecGetZoneInfo(self.hPAGE, II_CURRENT, &self.zone, x)
             if self.err_code != 0:
                 raise Exception("OmniPage: get zone info: {:08x}".format(self.err_code))
-            zone_list.append(zone.copy())
+            zone_list.append(self.zone.copy())
         return zone_list
 
     def write_zones(self, zones):
-        cdef ZONE zone
+        cdef ZONE* pzone
         # Make sure we've loaded an image
         if not self.hPAGE:
             raise Exception("pyCSDK: write_zones called without a loaded image.")
@@ -110,8 +123,22 @@ cdef class CSDK:
             raise Exception("OmniPage: delete zones error: {:08x}".format(self.err_code))
         # Write the new zone list to the SDK data structure
         for i, z in enumerate(zones):
-            zone = z
-            self.err_code = kRecInsertZone(self.hPAGE, II_CURRENT, &zone, i)
+            # I pray that omnipage frees this since it's impossible to tell if it does or does not
+            pzone = <ZONE*> malloc(sizeof(ZONE))
+            pzone[0].type = z['type']
+            pzone[0].rectBBox.left = z['rectBBox']['left']
+            pzone[0].rectBBox.right = z['rectBBox']['right']
+            pzone[0].rectBBox.top = z['rectBBox']['top']
+            pzone[0].rectBBox.bottom = z['rectBBox']['bottom']
+            pzone[0].userdata = z['userdata']
+            pzone[0].chk_control = z['chk_control']
+            pzone[0].fm = z['fm']
+            pzone[0].rm = z['rm']
+            pzone[0].filter = z['filter']
+            pzone[0].chk_fn= z['chk_fn']
+            pzone[0].chk_sect = z['chk_sect']
+
+            self.err_code = kRecInsertZone(self.hPAGE, II_CURRENT, pzone, -1)
             if self.err_code != 0:
                 raise Exception("OmniPage: insert zone error: {:08x}".format(self.err_code))
 
@@ -134,7 +161,7 @@ cdef class CSDK:
         # Set the output format
         self.err_code = kRecSetDTXTFormat(0, format)
         if self.err_code != 0:
-            raise Exception("OmniPage: set DTXT format: {:08x}".format(self.err_code))
+             raise Exception("OmniPage: set DTXT format: {:08x}".format(self.err_code))
         # Write the output to a file
         self.err_code = kRecConvert2DTXT(0, &self.hPAGE, self.current_page, pFilename)
         if self.err_code != 0:

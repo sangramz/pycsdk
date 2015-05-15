@@ -472,6 +472,17 @@ ctypedef unsigned int RECERR
 #         LINK_FILEEXISTS_ERR = 0x8004DE05
 
 cdef extern from "KernelApi.h":
+    ctypedef const char* LPCSTR
+    ctypedef const char* LPCTSTR
+    ctypedef char* LPTSTR
+
+    ctypedef unsigned char BYTE
+    ctypedef unsigned short WCHAR
+    ctypedef unsigned short WORD
+    ctypedef unsigned int DWORD
+
+    ctypedef int INTBOOL
+
     ctypedef enum IMF_FORMAT:
         FF_TIFNO = 0
         FF_TIFPB
@@ -518,6 +529,60 @@ cdef extern from "KernelApi.h":
         FF_JBIG
         FF_OPG
         FF_SIZE
+
+    ctypedef enum FILLINGMETHOD:
+        FM_DEFAULT = 0
+        FM_OMNIFONT
+        FM_DRAFTDOT9
+        FM_BARCODE
+        FM_OMR
+        FM_HANDPRINT
+        FM_BRAILLE
+        FM_DRAFTDOT24
+        FM_OCRA
+        FM_OCRB
+        FM_MICR
+        FM_BARCODE2D
+        FM_DOTDIGIT
+        FM_DASHDIGIT
+        FM_RESERVED_2
+        FM_CMC7
+        FM_NO_OCR
+        FM_SIZE
+
+    ctypedef enum RECOGNITIONMODULE:
+        RM_AUTO = 0
+        RM_OMNIFONT_MTX
+        RM_OMNIFONT_MOR
+        RM_DOT
+        RM_BAR
+        RM_OMR
+        RM_HNR
+        RM_RER
+        RM_BRA
+        RM_MAT
+        RM_BAR_AMP
+        RM_OMNIFONT_PLUS2W
+        RM_OMNIFONT_FRX
+        RM_OMNIFONT_PLUS3W
+        RM_ASIAN
+        RM_RESERVED_M
+        RM_RESERVED_A
+        RM_SIZE
+
+    ctypedef enum CHR_FILTER:
+        FILTER_DEFAULT = 0
+        FILTER_DIGIT = 1
+        FILTER_UPPERCASE = 2
+        FILTER_LOWERCASE = 4
+        FILTER_PUNCTUATION = 8
+        FILTER_MISCELLANEOUS = 16
+        FILTER_PLUS = 32
+        FILTER_USER_DICT = 64
+        FILTER_ALL
+        FILTER_ALPHA = (FILTER_UPPERCASE | FILTER_LOWERCASE)
+        FILTER_NUMBERS = (FILTER_DIGIT | FILTER_PLUS)
+        FILTER_SIZE = 128
 
     ctypedef enum IMAGEINDEX:
         II_UNDEFINED = -1
@@ -569,8 +634,18 @@ cdef extern from "KernelApi.h":
         pass
     ctypedef RECPAGESTRUCT* HPAGE
 
+    ctypedef struct SIZE:
+        int cx
+        int cy
+    ctypedef SIZE* LPSIZE
+
     ctypedef struct IMG_INFO:
-        pass
+        SIZE Size
+        SIZE DPI
+        unsigned int BytesPerLine
+        INTBOOL IsPalette
+        WORD BitsPerPixel
+        void* DummyS
     ctypedef IMG_INFO* LPIMG_INFO
 
     ctypedef struct RECT:
@@ -583,20 +658,16 @@ cdef extern from "KernelApi.h":
     ctypedef struct ZONE:
         RECT rectBBox
         ZONETYPE type
-        # unsigned int type
+        DWORD userdata
+        DWORD chk_control
+        FILLINGMETHOD fm
+        RECOGNITIONMODULE rm
+        CHR_FILTER filter
+        DWORD chk_fn
+        char chk_sect [16]
+
     ctypedef ZONE* LPZONE
     ctypedef const ZONE* LPCZONE
-
-    ctypedef const char* LPCSTR
-    ctypedef const char* LPCTSTR
-    ctypedef char* LPTSTR
-
-    ctypedef unsigned char BYTE
-    ctypedef unsigned short WCHAR
-    ctypedef unsigned short WORD
-    ctypedef unsigned int DWORD
-
-    ctypedef int INTBOOL
 
     # ctypedef struct LETTER:
     #     WORD left
@@ -631,4 +702,3 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetErrorUIText(RECERR ErrCode, int ErrExt, LPCTSTR lpErrStr, LPTSTR lpErrUIText, int *pBuffLen)
     RECERR kRecSetDTXTFormat(int sid, DTXTOUTPUTFORMATS dFormat)
     RECERR kRecConvert2DTXT(int sid, const HPAGE *ahPage, int nPage, LPCTSTR pFilename)
-    # RECERR kRecGetLetters(HPAGE hPage, IMAGEINDEX iiImage, LPLETTER* ppLetter, int* pLettersLength)
