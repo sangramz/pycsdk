@@ -596,6 +596,8 @@ cdef extern from "KernelApi.h":
     ctypedef unsigned short WORD
     ctypedef unsigned int DWORD
 
+    ctypedef int INTBOOL
+
     # ctypedef struct LETTER:
     #     WORD left
     #     WORD top
@@ -615,6 +617,8 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetImgFilePageCount(HIMGFILE hlFILE, int *lpPagecount)
     RECERR kRecLoadImg(int sid, HIMGFILE hlFILE, HPAGE *phPAGE, int iPage)
     RECERR kRecGetImgInfo(int sid, HPAGE hPAGE, IMAGEINDEX iiImage, LPIMG_INFO pImg)
+    RECERR kRecSetNongriddedTableDetect(int sid, INTBOOL bForceSingle)
+    RECERR kRecSetForceSingleColumn(int sid, INTBOOL bForceSingle)
     RECERR kRecLocateZones(int sid, HPAGE hPAGE)
     RECERR kRecRecognize(int sid, HPAGE hPAGE, LPCSTR pFilename)
     RECERR kRecCopyOCRZones(HPAGE hPage)

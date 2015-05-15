@@ -22,6 +22,14 @@ cdef class CSDK:
         self.err_code = kRecInit("pycsdk", "pycsdk")
         if self.err_code != 0:
             raise Exception("OmniPage: initialization error: {:08x}".format(self.err_code))
+        # set Decomp method
+        self.err_code = kRecSetNongriddedTableDetect(0, 1)
+        if self.err_code != 0:
+            raise Exception("OmniPage: SetNongriddedTableDetect error: {:08x}".format(self.err_code))
+        # # Set single column mode
+        # self.err_code = kRecSetForceSingleColumn(0, 1)
+        # if self.err_code != 0:
+        #     raise Exception("OmniPage: SetForceSingleColumn error: {:08x}".format(self.err_code))
 
     def __dealloc__(self):
         # if we've loaded an image, free it
@@ -36,7 +44,7 @@ cdef class CSDK:
         return self
 
     def __exit__(self, type, value, traceback):
-        self.__dealloc__()
+        pass
 
     def load_file(self, input_file):
         cdef LPCSTR in_file = input_file
