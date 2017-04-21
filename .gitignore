@@ -1,3 +1,6 @@
 lcxz
 lcxz.h
 *.c
+build
+pycsdk.c
+

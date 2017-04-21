@@ -471,10 +471,11 @@ ctypedef unsigned int RECERR
 #         LINK_NOTFOUND_ERR = 0x8004DE04
 #         LINK_FILEEXISTS_ERR = 0x8004DE05
 
-cdef extern from "KernelApi.h":
+cdef extern from "RecApiPlus.h":
     ctypedef const char* LPCSTR
     ctypedef const char* LPCTSTR
     ctypedef char* LPTSTR
+    ctypedef unsigned short* LPWSTR
 
     ctypedef unsigned char BYTE
     ctypedef unsigned short WCHAR
@@ -702,3 +703,58 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetErrorUIText(RECERR ErrCode, int ErrExt, LPCTSTR lpErrStr, LPTSTR lpErrUIText, int *pBuffLen)
     RECERR kRecSetDTXTFormat(int sid, DTXTOUTPUTFORMATS dFormat)
     RECERR kRecConvert2DTXT(int sid, const HPAGE *ahPage, int nPage, LPCTSTR pFilename)
+
+    RECERR RecInitPlus(LPCTSTR pCompanyName, LPCTSTR pProductName)
+    RECERR RecQuitPlus()
+    RECERR RecSaveSettings(int sid, LPCTSTR pStsFile)
+    RECERR RecLoadSettings(int sid, LPCTSTR pStsFile)
+    RECERR RecSetDefaultSettings(int sid)
+    RECERR RecSetOCRThreadCount(int sid, int thCount)
+    RECERR RecGetOCRThreadCount(int sid, int *thCount)
+
+    ctypedef struct RECDOCSTRUCT:
+        pass
+
+    ctypedef RECDOCSTRUCT* HDOC
+
+    ctypedef struct STATISTIC:
+        int iChrNumber
+        int iWordNumber
+        int iChrRejected
+        DWORD iRecognitionTime
+        DWORD iReadingTime
+        DWORD iScanTime
+        DWORD iPreprocTime
+        DWORD iDecompTime
+
+    RECERR RecCreateDoc(int sid, LPCTSTR pDocFile, HDOC *phDoc, int mode)
+    RECERR RecOpenDoc(int sid, LPCTSTR pDocFile, HDOC *phDoc)
+    RECERR RecCloseDoc(int sid, HDOC hDoc)
+    RECERR RecDeleteDoc(LPCTSTR pDocName)
+    RECERR RecSaveDoc(int sid, HDOC hDoc, LPCTSTR pDocFile)
+    RECERR RecGetPageCount(int sid, HDOC hDoc, int *pnPages)
+    RECERR RecInsertPage(int sid, HDOC hDoc, HPAGE hPage, int iPage)
+    RECERR RecUpdatePage(int sid, HDOC hDoc, int iPage, HPAGE hPage)
+    RECERR RecGetPage(int sid, HDOC hDoc, int iPage, HPAGE *phPage)
+    RECERR RecDeletePage(int sid, HDOC hDoc, int iPage)
+    RECERR RecMovePage(int sid, HDOC hDoc, int iPageFrom, int iPageTo)
+    RECERR RecConvert2Doc(int sid, HDOC hDoc, LPCTSTR pOutputFilename)
+    RECERR RecGetPageStatistics(int sid, HDOC hDoc, int iPage, STATISTIC *stat)
+    RECERR RecCreatePageStore(int sid, HDOC hDoc, int storeId, HPAGE hPage)
+    RECERR RecDeletePageStore(int sid, HDOC hDoc, int storeId)
+    RECERR RecGetPageStore(int sid, HDOC hDoc, int storeId, HPAGE *phPage)
+    RECERR RecFormatPageStore(int sid, HPAGE hPage)
+
+    ctypedef INTBOOL ONETOUCH_CB(INTBOOL bMore, void *pContext, LPCTSTR *notused)
+    ctypedef ONETOUCH_CB *LPONETOUCH_CB
+    ctypedef struct RPPERRORS:
+        RECERR rc
+        int page
+        LPWSTR obj
+        RPPERRORS* next
+
+    RECERR RecProcessPagesEx(int sid, LPCTSTR pDocFile, LPCTSTR *pImageFiles, LPONETOUCH_CB pCallback, void *pContext)
+    RECERR RecGetRPPErrorList(RPPERRORS **rppErrs)
+    RECERR RecExecuteWorkflow(int sid, LPCTSTR pWFfilename)
+
+

@@ -1,3 +1,5 @@
+# cython: c_string_type=str, c_string_encoding=ascii
+
 import os
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdlib cimport malloc, free
@@ -14,35 +16,24 @@ cdef class CSDK:
     cdef readonly int dpiy
     cdef RECERR err_code
     cdef ZONE zone
-    scanned = False
+    cdef public:
+        object scanned
 
-    def __cinit__(self, license_file, license_key):
-        license_abspath = os.path.abspath(license_file)
-        cdef LPCSTR pLicenseFile = license_abspath
-        cdef LPCSTR key = license_key
-        # Load the License information
-        self.err_code = kRecSetLicense(pLicenseFile, key)
-        if self.err_code != 0:
-            raise Exception("OmniPage: licensing error: {:08x}".format(self.err_code))
+    def __cinit__(self,  company_name, product_name):
         # Initialize the scanning software
-        self.err_code = kRecInit("pycsdk", "pycsdk")
+        cdef LPCSTR pCompanyName = company_name
+        cdef LPCSTR pProductName = product_name
+        self.err_code = RecInitPlus(pCompanyName, pProductName)
         if self.err_code != 0:
             raise Exception("OmniPage: initialization error: {:08x}".format(self.err_code))
-        # set Decomp method
-        # self.err_code = kRecSetNongriddedTableDetect(0, 1)
-        # if self.err_code != 0:
-        #     raise Exception("OmniPage: SetNongriddedTableDetect error: {:08x}".format(self.err_code))
-        # # Set single column mode
-        # self.err_code = kRecSetForceSingleColumn(0, 1)
-        # if self.err_code != 0:
-        #     raise Exception("OmniPage: SetForceSingleColumn error: {:08x}".format(self.err_code))
+        self.scanned = False
 
     def __dealloc__(self):
         # if we've loaded an image, free it
         if self.hPAGE:
             self.free_image()
         # Deallocate and quit
-        self.err_code = kRecQuit()
+        self.err_code = RecQuitPlus()
         if self.err_code != 0:
             raise Exception("OmniPage: quit error: {:08x}".format(self.err_code))
 
