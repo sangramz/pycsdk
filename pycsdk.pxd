@@ -1,475 +1,4 @@
 ctypedef unsigned int RECERR
-# cdef extern from "RECERR.h":
-#     ctypedef enum RECERR:
-#         REC_OK = 0x00000000
-#         FILE_ERR = 0x8004C101
-#         FILE_SYNTAX_ERR = 0x8004C102
-#         FILE_OPEN_ERR = 0x8004C103
-#         FILE_NOTFOUND_ERR = 0x8004C104
-#         FILE_READ_ERR = 0x8004C105
-#         FILE_WRITE_ERR = 0x8004C106
-#         FILE_ACCESS_ERR = 0x8004C107
-#         FILE_REMOVE_ERR = 0x8004C108
-#         FILE_CREATE_ERR = 0x8004C109
-#         FILE_SEEK_ERR = 0x8004C10A
-#         FILE_MEM_ERR = 0x8004C10B
-#         FILE_DISKFULL_ERR = 0x8004C10C
-#         FILE_IO_ERR = 0x8004C10D
-#         FILE_SHARE_ERR = 0x8004C10E
-#         FILE_ALREADYEXIST_ERR = 0x8004C10F
-#         FILE_INVALIDFLAG_ERR = 0x8004C110
-#         FILE_INVALIDPARAMETER_ERR = 0x8004C111
-#         FILE_LOCKVIOLATION_ERR = 0x8004C112
-#         FILE_DIRNOTEMPTY_ERR = 0x8004C113
-#         FILE_INVALIDHANDLE_ERR = 0x8004C114
-#         FILE_TOOLARGE_ERR = 0x8004C115
-#         FILE_MUTEX_NOTAVAILABLE_ERR = 0x8004C116
-#         FILE_CANTCREATE_MUTEX_ERR = 0x8004C117
-#         FILE_CANTRELEASE_MUTEX_ERR = 0x8004C118
-#         FILE_INIT_ERR = 0x8004C119
-#         FILE_QUIT_ERR = 0x8004C11A
-#         FILE_NOT_IMPLEMENTED_ERR = 0x8004C11B
-#         FILE_INVALIDPOINTER_ERR = 0x8004C11C
-#         FILE_INVALIDFUNCTION_ERR = 0x8004C11D
-#         FILE_NOMORE_WARN = 0x0004C11E
-#         MEM_NOTENOUGH_ERR = 0x8004C201
-#         MEM_INVALIDPOINTER_ERR = 0x8004C202
-#         CHR_ILLEGALCODE_ERR = 0x8004C301
-#         CHR_ILLEGALSETTING_ERR = 0x8004C302
-#         CHR_NOMORE_WARN = 0x0004C303
-#         CHR_SETFILE_ERR = 0x8004C304
-#         CHR_CODELENGTH_ERR = 0x8004C305
-#         CHR_MISSINGEXPORT_ERR = 0x8004C306
-#         CHR_LANGSET_CODEPAGE_ERR = 0x8004C307
-#         CHR_INIT_ERR = 0x8004C308
-#         CHR_MULTIPLELANG_FOUND_WARN = 0x0004C309
-#         CHR_LANG_NOTFOUND_ERR = 0x8004C30A
-#         CHR_LANG_DISABLED_WARN = 0x0004C30B
-#         API_INCORRECTMODULEVERSION_ERR = 0x8004C401
-#         API_INIT_ERR = 0x8004C402
-#         API_QUIT_ERR = 0x8004C403
-#         API_INIT_WARN = 0x0004C404
-#         API_PROCESS_ABORTED_ERR = 0x8004C405
-#         API_PROCESS_FINISH = 0x8004C406
-#         API_MODULEMISSING_ERR = 0x8004C407
-#         API_MODULELOAD_ERR = 0x8004C408
-#         API_MODULEENTRY_ERR = 0x8004C409
-#         API_MODULEINVALID_ERR = 0x8004C40A
-#         API_MODULEINIT_ERR = 0x8004C40B
-#         API_NOT_AVAILABLE_ERR = 0x8004C40C
-#         API_ERROR_ERR = 0x8004C40D
-#         API_GPFAULT_ERR = 0x8004C40E
-#         API_PLATFORM_ERR = 0x8004C40F
-#         API_STS_SYNTAX_ERR = 0x8004C410
-#         API_STS_ERR = 0x8004C411
-#         API_HARDLOCK_ERR = 0x8004C412
-#         API_LICENSE_ERR = 0x8004C413
-#         API_PARAMETER_ERR = 0x8004C414
-#         API_BUSY_ERR = 0x8004C415
-#         API_EVALDATE_EXPIRED_ERR = 0x8004C416
-#         API_TIMEOUT_ERR = 0x8004C417
-#         API_FILEFORMAT_ERR = 0x8004C418
-#         API_INVALIDSESSION_ERR = 0x8004C419
-#         NOT_IMPL_ERR = 0x8004C41A
-#         API_DOTNET30_OR_LATER_MISSING_ERR = 0x8004C41B
-#         API_CRYPT_MISS_WARN = 0x0004C41C
-#         API_HARDTIMEOUT_ERR = 0x8004C41D
-#         API_DOTNET40_OR_LATER_MISSING_ERR = 0x8004C41E
-#         API_LICENSEMGR_ERR = 0x8004C41F
-#         API_LICENSEVALIDATION_WARN = 0x0004C420
-#         API_LANGUAGE_SET_ERR = 0x8004C421
-#         API_ERRORS_HAPPENED_WARN = 0x0004C422
-#         API_WARNINGS_HAPPENED_WARN = 0x0004C423
-#         RSD_WARN = 0x0004C501
-#         RSD_INTERNAL = 0x8004C502
-#         RSD_FAIL = 0x8004C503
-#         RSD_NA = 0x8004C504
-#         RSD_ACCESS = 0x8004C505
-#         RSD_CORRUPTED = 0x8004C506
-#         RSD_NOMEMORY = 0x8004C507
-#         RSD_MEMORYFAIL = 0x8004C508
-#         RSD_NOFILE = 0x8004C509
-#         RSD_CREATEFAIL = 0x8004C50A
-#         RSD_OPENFAIL = 0x8004C50B
-#         RSD_READONLY = 0x8004C50C
-#         RSD_READFAIL = 0x8004C50D
-#         RSD_WRITEFAIL = 0x8004C50E
-#         RSD_CLOSEFAIL = 0x8004C50F
-#         RSD_FILECORRUPTED = 0x8004C510
-#         RSD_NOMSGFILE = 0x8004C511
-#         RSD_NOMESSAGE = 0x8004C512
-#         RSD_DLL_NOFILE = 0x8004C513
-#         RSD_DLL_FORMAT = 0x8004C514
-#         RSD_DLL_GETPROC = 0x8004C515
-#         RSD_NOTOPENED = 0x8004C516
-#         RSD_NOTLOADED = 0x8004C517
-#         RSD_NODRIVER = 0x8004C518
-#         RSD_BADVERSION = 0x8004C519
-#         RSD_DRIVERFAIL = 0x8004C51A
-#         RSD_NOCARD = 0x8004C51B
-#         RSD_BADHANDLE = 0x8004C51C
-#         RSD_PARAMID = 0x8004C51D
-#         RSD_PARAMVALUE = 0x8004C51E
-#         RSD_BADADFCOMMAND = 0x8004C51F
-#         RSD_WARNSTARTMODE = 0x0004C520
-#         RSD_BADSTARTMODE = 0x8004C521
-#         RSD_BADTRANSFER = 0x8004C522
-#         RSD_WARNPAPERSOURCE = 0x0004C523
-#         RSD_BADPAPERSOURCE = 0x8004C524
-#         RSD_WARNRESOLUTION = 0x0004C525
-#         RSD_BADRESOLUTION = 0x8004C526
-#         RSD_WARNMARGIN = 0x0004C527
-#         RSD_BADMARGIN = 0x8004C528
-#         RSD_WARNPAPERSIZE = 0x0004C529
-#         RSD_BADPAPERSIZE = 0x8004C52A
-#         RSD_WARNORIENTATION = 0x0004C52B
-#         RSD_BADORIENTATION = 0x8004C52C
-#         RSD_WARNDUPLEX = 0x0004C52D
-#         RSD_BADDUPLEX = 0x8004C52E
-#         RSD_WARNIMAGEINTERP = 0x0004C52F
-#         RSD_BADIMAGEINTERP = 0x8004C530
-#         RSD_BADCOLORINTERP = 0x8004C531
-#         RSD_BADHALFTONE = 0x8004C532
-#         RSD_WARNBRIGHTNESS = 0x0004C533
-#         RSD_BADBRIGHTNESS = 0x8004C534
-#         RSD_WARNCONTRAST = 0x0004C535
-#         RSD_BADCONTRAST = 0x8004C536
-#         RSD_BADMIDTONE = 0x8004C537
-#         RSD_WARNLAMPCOLOR = 0x0004C538
-#         RSD_BADLAMPCOLOR = 0x8004C539
-#         RSD_BADCOMPRESSION = 0x8004C53A
-#         RSD_BADFILETYPE = 0x8004C53B
-#         RSD_BADINDICATION = 0x8004C53C
-#         RSD_CONFIGURATIONID = 0x8004C53D
-#         RSD_HOSTID = 0x8004C53E
-#         RSD_SCSIID = 0x8004C53F
-#         RSD_BADPARAMCOMBO = 0x8004C540
-#         RSD_LINE_TOO_WIDE = 0x8004C541
-#         RSD_NOIMAGE = 0x8004C542
-#         RSD_BADIMAGEWIDTH = 0x8004C543
-#         RSD_BADIMAGELENGTH = 0x8004C544
-#         RSD_NOAUTOROTATE = 0x8004C545
-#         RSD_TRUNCATED = 0x8004C546
-#         RSD_NOTCAPABLE = 0x8004C547
-#         RSD_NOTCONNECTED = 0x8004C548
-#         RSD_NOTREADY = 0x8004C549
-#         RSD_NOPAPER = 0x8004C54A
-#         RSD_PAPERJAM = 0x8004C54B
-#         RSD_DOUBLEFEED = 0x8004C54C
-#         RSD_COVEROPEN = 0x8004C54D
-#         RSD_BOTHFEEDERSLOADED = 0x8004C54E
-#         RSD_RESERVED = 0x8004C54F
-#         RSD_NOTRESERVED = 0x8004C550
-#         RSD_SCANNERBUSY = 0x8004C551
-#         RSD_SCANNERSTOP = 0x8004C552
-#         RSD_SCANNERFAIL = 0x8004C553
-#         RSD_TIMEOUT = 0x8004C554
-#         RSD_USER_CANCELLED = 0x8004C555
-#         RSD_ABORTED = 0x8004C556
-#         RSD_NOTPOSSIBLE = 0x8004C557
-#         RSD_PAPERPICK = 0x8004C558
-#         IMF_READ_ERR = 0x8004C601
-#         IMF_WRITE_ERR = 0x8004C602
-#         IMF_INIT_ERR = 0x8004C603
-#         IMF_OPEN_ERR = 0x8004C604
-#         IMF_CLOSE_ERR = 0x8004C605
-#         IMF_CREATE_ERR = 0x8004C606
-#         IMF_MEMORY_ERR = 0x8004C607
-#         IMF_NOTSUP_ERR = 0x8004C608
-#         IMF_TAGMISSING_ERR = 0x8004C609
-#         IMF_COMP_ERR = 0x8004C60A
-#         IMF_IMGFORM_ERR = 0x8004C60B
-#         IMF_PAGENUM_ERR = 0x8004C60C
-#         IMF_FILEFORMAT_ERR = 0x8004C60D
-#         IMF_COLOR_ERR = 0x8004C60E
-#         IMF_TMPFILE_ERR = 0x8004C60F
-#         IMF_APPEND_ERR = 0x8004C610
-#         IMF_FILENOTEMPTY_ERR = 0x8004C611
-#         IMF_FAXVIEWMISS_ERR = 0x8004C612
-#         IMF_PASSWORD_WARN = 0x0004C613
-#         IMF_EMPTYHANDLE_WARN = 0x0004C614
-#         IMF_PDFAPPENDONLY_ERR = 0x8004C615
-#         IMF_READ_WARN = 0x0004C616
-#         IMF_COMP_WARN = 0x0004C617
-#         IMF_PASSWORD_SYNTAX_WARN = 0x0004C618
-#         IMF_PASSWORD_ERR = 0x8004C619
-#         IMF_CRYPT_NOTSUP_ERR = 0x8004C61A
-#         IMF_FONT_MISSING_WARN = 0x0004C61B
-#         IMG_SETTING_ERR = 0x8004C701
-#         IMG_NOTENOUGHMEMORY_ERR = 0x8004C702
-#         IMG_RECT_ERR = 0x8004C703
-#         IMG_DPI_ERR = 0x8004C704
-#         IMG_NOTFOUND_ERR = 0x8004C705
-#         IMG_COMPRESSED_ERR = 0x8004C706
-#         IMG_BITMAPADDRESS_ERR = 0x8004C707
-#         IMG_BITSPERPIXEL_ERR = 0x8004C708
-#         IMG_NOTATTACHED_ERR = 0x8004C709
-#         IMG_HANDLE_ERR = 0x8004C70A
-#         IMG_BUFFEROVERFLOW_ERR = 0x8004C70B
-#         IMG_ACCESS_ERR = 0x8004C70C
-#         IMG_NOMORE_WARN = 0x0004C70D
-#         IMG_SIZE_ERR = 0x8004C70E
-#         IMG_INVALIDOP_ERR = 0x8004C70F
-#         IMG_ZONE_ERR = 0x8004C710
-#         IMG_DPI_WARN = 0x0004C711
-#         IMG_ANCHOR_WARN = 0x0004C712
-#         IMG_ANCHORNOTFOUND_ERR = 0x8004C713
-#         IMG_NOTEXTZONE_WARN = 0x0004C714
-#         IMG_ANCHORNOTEXIST_ERR = 0x8004C715
-#         IMG_TEMPLATENOTMATCHED_ERR = 0x8004C716
-#         IMG_ANCHOR_CONTENT_ERR = 0x8004C717
-#         IMG_ANCHORMOREFOUND_WARN = 0x8004C718
-#         IMG_TRANSFORM_ERR = 0x8004C719
-#         IMG_MATCHING_LOW_CONFIDENCE = 0x8004C71A
-#         IMG_ANCHOR_CHECKNOTFOUND_ERR = 0x8004C71B
-#         IMG_ANCHOR_REFERENCENOTFOUND_ERR = 0x8004C71C
-#         IMG_ANCHOR_MOREREFERENCE_ERR = 0x8004C71D
-#         IMG_ANCHOR_SELECTORNOTFOUND_ERR = 0x8004C71E
-#         IMG_ANCHOR_RECOGNITION_ERR = 0x8004C71F
-#         IMG_ANCHOR_SKIP_WARN = 0x0004C720
-#         IMG_ANCHOR_VALUE_WARN = 0x0004C721
-#         IMG_ANCHOR_ZONEISNOTANCHORED_WARN = 0x0004C722
-#         IMG_ANCHOR_TOOFEWANCHORS_WARN = 0x0004C723
-#         IMG_ANCHOR_TOOMANYANCHORS_WARN = 0x0004C724
-#         IMG_ANCHOR_POSITION_WARN = 0x0004C725
-#         IMG_ANCHOR_SIMILARTEXT_WARN = 0x0004C726
-#         IMG_ANCHOR_NOTREFERENCED_WARN = 0x0004C727
-#         IMG_ANCHOR_CHECKDRIFTTOOLARGE_WARN = 0x0004C728
-#         IMG_ANCHOR_DRIFTNOTCONSISTENT_WARN = 0x0004C729
-#         IMG_ANCHOR_CHECKANCHORSKIPPED_WARN = 0x0004C72A
-#         PAGE_NOTFOUND_ERR = 0x8004C801
-#         PAGE_HANDLE_ERR = 0x8004C802
-#         MGR_ERR = 0x8004C901
-#         NO_TXT_WARN = 0x0004C902
-#         OCR_NO_MODULE_WARN = 0x0004C903
-#         ZONE_NOTFOUND_ERR = 0x8004C904
-#         ZONE_NOTFOUND_WARN = 0x0004C905
-#         ZONE_POSITION_ERR = 0x8004C906
-#         ZONE_EXISTING_SEQ_ERR = 0x8004C907
-#         ZONE_FILE_ERR = 0x8004C908
-#         ZONE_SIZE_ERR = 0x8004C909
-#         ZONE_SHAPE_ERR = 0x8004C90A
-#         ZONE_IMAGE_DOWNSAMPLED_WARN = 0x0004C90B
-#         ZONE_SIZE_WARN = 0x0004C90C
-#         ZONE_NO_FIELDNAME_WARN = 0x0004C90D
-#         EXTRACTED_TXT_WARN = 0x0004C90E
-#         LANGDET_INHERITED_WARN = 0x0004C90F
-#         ZONE_OUTOFTHEIMAGE_ERR = 0x8004C910
-#         MOR_INIT_ERR = 0x8004CA01
-#         MOR_DOS_ERR = 0x8004CA02
-#         MOR_BCTNOTFOUND_ERR = 0x8004CA03
-#         MOR_BCTCORRUPTED_ERR = 0x8004CA04
-#         MOR_BCTVERSION_ERR = 0x8004CA05
-#         MOR_TOOLARGE_ERR = 0x8004CA06
-#         MOR_FILECORRUPTED_ERR = 0x8004CA07
-#         MOR_INTERNAL_ERR = 0x8004CA08
-#         MOR_GPFAULT_ERR = 0x8004CA09
-#         BAR_ERR = 0x8004CB01
-#         BAR_NOT_ENOUGH_MEMORY_ERR = 0x8004CB02
-#         BAR_NO_CODE_ERR = 0x8004CB03
-#         BAR_INVALID_CODE_ERR = 0x8004CB04
-#         BAR_NOT_DEFINIT_ERR = 0x8004CB05
-#         BAR_INCOMPATIBLE_TYPE_ERR = 0x8004CB06
-#         BAR_DEPRECATED_TYPE_ERR = 0x8004CB07
-#         BAR_TYPE_WARN = 0x0004CB08
-#         BAR_UNCOMBINABLE_TYPE_ERR = 0x8004CB09
-#         BAR_NOTSUPPORTED_TYPE_ERR = 0x8004CB0A
-#         DOT_ERR = 0x8004CC01
-#         OMR_ERR = 0x8004CD01
-#         HNR_TBSCORRUPTED_ERR = 0x8004CE01
-#         HNR_SYNTAX_WARN = 0x0004CE02
-#         RER_INTERNAL_ERR = 0x8004CF01
-#         RER_NOKNOWLEDGEFILE_ERR = 0x8004CF02
-#         RER_NOCHARSET_SET_ERR = 0x8004CF03
-#         RER_NOTSUPPORTED_CHARSET_ERR = 0x8004CF04
-#         RER_SPECFILE_NOTFOUND_ERR = 0x8004CF05
-#         SPL_MEMORY_ERR = 0x8004D001
-#         SPL_NOINIT_ERR = 0x8004D002
-#         SPL_FOPEN_ERR = 0x8004D003
-#         SPL_FREAD_ERR = 0x8004D004
-#         SPL_FWRITE_ERR = 0x8004D005
-#         SPL_BADFILEFORMAT_ERR = 0x8004D006
-#         SPL_INIT_ERR = 0x8004D007
-#         SPL_CLOSE_ERR = 0x8004D008
-#         SPL_LANG_ERR = 0x8004D009
-#         SPL_HANDLE_ERR = 0x8004D00A
-#         SPL_NOMORE_WARN = 0x0004D00B
-#         SPL_INTERNAL_ERR = 0x8004D00C
-#         SPL_DUPWORD_ERR = 0x8004D00D
-#         SPL_NOTFOUND_ERR = 0x8004D00E
-#         SPL_BADWORD_ERR = 0x8004D00F
-#         SPL_UDSECT_ERR = 0x8004D010
-#         SPL_REGEXP_SYNTAX_ERR = 0x8004D011
-#         SPL_EXISTSECT_WARN = 0x0004D012
-#         SPL_REGEXP_NOMATCH_ERR = 0x8004D014
-#         SPL_REGEXP_NOMATCH_WARN = 0x0004D015
-#         SPL_REGEXP_EXCLUSIVE_ERR = 0x8004D016
-#         SPL_REGEXP_WRONGRANGE_ERR = 0x8004D017
-#         SPL_REGEXP_SETINRANGE_ERR = 0x8004D018
-#         SPL_REGEXP_INVALIDCHR_ERR = 0x8004D019
-#         SPL_REGEXP_UNBALANCED1_ERR = 0x8004D01A
-#         SPL_REGEXP_UNBALANCED2_ERR = 0x8004D01B
-#         SPL_REGEXP_UNBALANCED3_ERR = 0x8004D01C
-#         SPL_REGEXP_WRONGNUMBER_ERR = 0x8004D01D
-#         SPL_REGEXP_WRONGUPPER_ERR = 0x8004D01E
-#         SPL_REGEXP_ESCAPE_ERR = 0x8004D01F
-#         SPL_REGEXP_HEXA_ERR = 0x8004D020
-#         SPL_REGEXP_MULTIPLICATOR_ERR = 0x8004D021
-#         SPL_REGEXP_ZERO_WIDTH_ERR = 0x8004D022
-#         SPL_REGEXP_UNEXPECTED_ERR = 0x8004D023
-#         APIP_INIT_ERR = 0x8004D101
-#         APIP_PARAM_ERR = 0x8004D102
-#         APIP_NOMORE_WARN = 0x0004D103
-#         APIP_INTERNAL_ERR = 0x8004D104
-#         L_WARNINGS = 0x0004DA01
-#         L_WARNING_NOTFOUND = 0x0004DA02
-#         L_WARNING_NOTOPENED = 0x0004DA03
-#         L_WARNING_MISSING = 0x0004DA04
-#         L_WARNING_SUBSTITUTED = 0x0004DA05
-#         L_ERRORS = 0x8004DA06
-#         L_ERROR_NOID = 0x8004DA07
-#         L_ERROR_OBJID = 0x8004DA08
-#         L_ERROR_OBJTYPE = 0x8004DA09
-#         L_ERROR_FILE = 0x8004DA0A
-#         L_ERROR_FILE_OPEN = 0x8004DA0B
-#         L_ERROR_FILE_CLOSE = 0x8004DA0C
-#         L_ERROR_FILE_SEEK = 0x8004DA0D
-#         L_ERROR_FILE_READ = 0x8004DA0E
-#         L_ERROR_FILE_WRITE = 0x8004DA0F
-#         L_ERROR_FILE_FORMAT = 0x8004DA10
-#         L_ERROR_PARAMETER = 0x8004DA11
-#         L_ERROR_RANGE = 0x8004DA12
-#         L_ERROR_CALL = 0x8004DA13
-#         L_ERROR_CONVERTER = 0x8004DA14
-#         L_ERROR_BADVERSION = 0x8004DA15
-#         L_ERROR_IMAGE = 0x8004DA16
-#         L_ERROR_DTK = 0x8004DA17
-#         L_ERROR_READONLY = 0x8004DA18
-#         L_ERROR_OUTPUT_MODE = 0x8004DA19
-#         L_ERROR_APPSET = 0x8004DA1A
-#         L_ERROR_PRERENDERING = 0x8004DA1B
-#         L_ERROR_NOACCESS = 0x8004DA1C
-#         L_ERROR_NOTIMPLEMENTED = 0x8004DA1D
-#         L_ERROR_MASTERSOFT = 0x8004DA1E
-#         L_ERROR_ABORTED = 0x8004DA1F
-#         L_ERROR_CONV_NODOCUMENT = 0x8004DA20
-#         L_ERROR_CONV_LECSO = 0x8004DA21
-#         L_ERROR_TOO_MANY_SHEETS = 0x8004DA22
-#         L_ERROR_DOCFORMATTER = 0x8004DA23
-#         L_ERROR_STOP = 0x8004DA24
-#         L_ERROR_VOCALIZER = 0x8004DA25
-#         L_ERROR_NO_VOCALIZER_VOICE = 0x8004DA26
-#         L_ERROR_REALSPEAK = 0x8004DA27
-#         L_ERROR_NO_REALSPEAK_VOICE = 0x8004DA28
-#         L_ERROR_CODEC = 0x8004DA29
-#         L_FATALERRORS = 0x8004DB01
-#         L_FERROR_MEMORY = 0x8004DB02
-#         L_FERROR_INTERNAL = 0x8004DB03
-#         L_FERROR_FILEFORMAT = 0x8004DB04
-#         L_FERROR_INDEX = 0x8004DB05
-#         L_FERROR_RECAPI = 0x8004DB06
-#         L_FERROR_NOSET = 0x8004DB07
-#         L_FERROR_PERMISSION = 0x8004DB08
-#         L_FERROR_MISSING = 0x8004DB09
-#         BRA_INIT_ERR = 0x8004D201
-#         MAT_INIT_ERR = 0x8004D301
-#         BAR_AMP_INIT_ERR = 0x8004D401
-#         MTX_INIT_ERR = 0x8004D501
-#         FRX_INIT_ERR = 0x8004D601
-#         ASN_INIT_ERR = 0x8004D701
-#         MNG_INIT_ERR = 0x8004D801
-#         STSMN_HANDLE_ERR = 0x8004D901
-#         STSMN_NOSETTING_ERR = 0x8004D902
-#         STSMN_BADTYPE_ERR = 0x8004D903
-#         STSMN_OPNOTALLOWED_ERR = 0x8004D904
-#         STSMN_PARAMETER_ERR = 0x8004D905
-#         STSMN_INVALIDFILE_ERR = 0x8004D906
-#         STSMN_NOTFOUND_ERR = 0x8004D907
-#         STSMN_FULLSAVEDTREE_WARN = 0x0004D908
-#         STSMN_BADORMISSINGREF_ERR = 0x8004D909
-#         STSMN_EMPTYPENDVAL_WARN = 0x0004D90A
-#         STSMN_NOSESSION_ERR = 0x8004D90B
-#         IPRO_E_NOTALLOWED = 0x8004C001
-#         IPRO_E_TOOMANYENGINE = 0x8004C002
-#         IPRO_E_ENGINEINITFAILED = 0x8004C003
-#         IPRO_E_IMAGEFILESINITFAILED = 0x8004C004
-#         IPRO_E_MEMORYBITMAPSINITFAILED = 0x8004C005
-#         IPRO_E_UDMANAGERINITFAILED = 0x8004C006
-#         IPRO_E_BARCODETYPESINITFAILED = 0x8004C007
-#         IPRO_E_MODULEINFOSINITFAILED = 0x8004C008
-#         IPRO_E_UILANGUAGESINITFAILED = 0x8004C009
-#         IPRO_E_SPELLLANGUAGESINITFAILED = 0x8004C00A
-#         IPRO_E_DOCUMENTSINITFAILED = 0x8004C00B
-#         IPRO_E_SCANNERSINITFAILED = 0x8004C00C
-#         IPRO_E_SCANNERINITFAILED = 0x8004C00D
-#         IPRO_E_CONVERTERSINITFAILED = 0x8004C00E
-#         IPRO_E_SETTINGMANAGERINITFAILED = 0x8004C00F
-#         IPRO_E_OBJECTISINVALID = 0x8004C010
-#         IPRO_E_CONVERTERMANAGERUNKNOWN = 0x8004C011
-#         IPRO_E_CONVERTERNOTFOUND = 0x8004C012
-#         IPRO_W_ZONEINVALID = 0x0004C013
-#         DOCUMENT_INVALID_ERR = 0x8004DC01
-#         DOCUMENT_ACCESS_ERR = 0x8004DC02
-#         DOCUMENT_RDONLY_SAVE_ERR = 0x8004DC03
-#         DOCUMENT_CONVERT_ERR = 0x8004DC04
-#         DOCUMENT_SHAREVIOLATION_ERR = 0x8004DC05
-#         DOCUMENT_NOTEXIST_ERR = 0x8004DC06
-#         DOCUMENTMGR_NOTINIT_ERR = 0x8004DC07
-#         DOCUMENT_CANCEL = 0x8004DC08
-#         DOCUMENT_VERSION_ERR = 0x8004DC09
-#         DOCUMENT_ZOP_ERR = 0x8004DC0A
-#         DOCUMENT_ZOP_NOTFOUND_ERR = 0x8004DC0B
-#         DOCUMENT_ZOP_BADSHAPE_ERR = 0x8004DC0C
-#         DOCUMENT_ZOP_NEEDOCR_ERR = 0x8004DC0D
-#         WORKFLOW_START_ERR = 0x8004DD01
-#         WORKFLOW_PROCESSED_ERR = 0x8004DD02
-#         WORKFLOW_INTERACTIVE_ERR = 0x8004DD03
-#         WORKFLOW_INPUT_ERR = 0x8004DD04
-#         WORKFLOW_OUTPUT_ERR = 0x8004DD05
-#         WORKFLOW_CREATION_ERR = 0x8004DD06
-#         WORKFLOW_INACTIVE_ERR = 0x8004DD07
-#         WORKFLOW_ACTIVE_ERR = 0x8004DD08
-#         WORKFLOW_INVALID_ERR = 0x8004DD09
-#         WORKFLOW_DOCUMENT_ERR = 0x8004DD0A
-#         WORKFLOW_ITEMNOTFOUND_ERR = 0x8004DD0B
-#         WORKFLOW_PARAMNOTFOUND_ERR = 0x8004DD0C
-#         WORKFLOW_PARAMEXISTS_ERR = 0x8004DD0D
-#         WORKFLOW_RECCHARS_INF = 0x0004DD0E
-#         WORKFLOW_RECWORDS_INF = 0x0004DD0F
-#         WORKFLOW_RECREJCHARS_INF = 0x0004DD10
-#         WORKFLOW_LDFAXCORR_INF = 0x0004DD11
-#         WORKFLOW_LDROT_INF = 0x0004DD12
-#         WORKFLOW_LDSKEW_WARN = 0x0004DD13
-#         WORKFLOW_BARCODE_INF = 0x0004DD14
-#         WORKFLOW_BARCODE_ERR = 0x8004DD15
-#         WORKFLOW_LDPATTERN_WARN = 0x0004DD16
-#         WORKFLOW_HWND_ERR = 0x8004DD17
-#         WORKFLOW_HWNDCREATE_ERR = 0x8004DD18
-#         WORKFLOW_HWND_WARN = 0x0004DD19
-#         WORKFLOW_RECLANGCONF_WARN = 0x0004DD1A
-#         WORKFLOW_ZNMANUAL_INF = 0x0004DD1B
-#         WORKFLOW_ZNTEMPLATE_INF = 0x0004DD1C
-#         WORKFLOW_IPNOTOOL_ERR = 0x8004DD1D
-#         WORKFLOW_IPLOAD_ERR = 0x8004DD1E
-#         WORKFLOW_IPTEMPLATE_INF = 0x0004DD1F
-#         WORKFLOW_IPMANUAL_INF = 0x0004DD20
-#         WORKFLOW_IPMANUAL_WARN = 0x0004DD21
-#         WORKFLOW_EDBLANK_WARN = 0x0004DD22
-#         WORKFLOW_EDCONVERT_WARN = 0x0004DD23
-#         WORKFLOW_EDNOFILE_WARN = 0x0004DD24
-#         WORKFLOW_DEPAGERANGE_ERR = 0x8004DD25
-#         WORKFLOW_DETEMPLATE_ERR = 0x8004DD26
-#         WORKFLOW_LDPDFCREATE_ERR = 0x8004DD27
-#         WORKFLOW_GOOGLEDOCS_FILETYPE_ERR = 0x8004DD28
-#         WORKFLOW_EVERNOTE_FILETYPE_ERR = 0x8004DD29
-#         WORKFLOW_LDBLANKPAGE_WARN = 0x0004DD2A
-#         WORKFLOW_INTERACTIONSUPRESSED_WARN = 0x0004DD2B
-#         WORKFLOW_CANCEL_WARN = 0x0004DD2C
-#         LINK_MORESPACE_ERR = 0x8004DE01
-#         LINK_CANCEL_WARN = 0x0004DE02
-#         LINK_NOTAUTHORIZED_ERR = 0x8004DE03
-#         LINK_NOTFOUND_ERR = 0x8004DE04
-#         LINK_FILEEXISTS_ERR = 0x8004DE05
 
 cdef extern from "RecApiPlus.h":
     ctypedef const char* LPCSTR
@@ -483,7 +12,136 @@ cdef extern from "RecApiPlus.h":
     ctypedef unsigned int DWORD
 
     ctypedef int INTBOOL
+    ctypedef int LONG
+    ctypedef int* LPLONG
+    
+    # error handling module
+    # ---------------------
 
+    ctypedef enum RETCODEINFO:
+        RET_OK = 0
+        RET_WARNING
+        RET_MEMORY_ERROR
+        RET_FILE_ERROR
+        RET_SCANNER_ERROR
+        RET_IMAGE_ERROR
+        RET_OCR_ERROR
+        RET_TEXT_ERROR
+        RET_OTHER_ERROR
+        RET_UNKNOWN = -1
+
+    RECERR kRecGetLastError (LONG *pErrExt, LPTSTR pErrStr, int buflen)
+    RECERR kRecGetLastErrorEx (LONG *pErrExt, LPTSTR *ppErrStr, LPTSTR *ppErrXml)
+    RETCODEINFO kRecGetErrorInfo (RECERR ErrCode, LPCSTR *lpErrSym)
+    RECERR kRecGetErrorUIText (RECERR ErrCode, LONG ErrExt, LPCTSTR lpErrStr, LPTSTR lpErrUIText, int *pBuffLen)
+    
+    # settings manager module
+    # -----------------------
+    
+    ctypedef struct SEnumTypeElement:
+        const char* id
+        int value
+    ctypedef struct RECSTSSTRUCT:
+        pass
+    ctypedef RECSTSSTRUCT* HSETTING
+    ctypedef enum STSTYPES:
+        STS_UNDEFINED
+        STS_ENUM
+        STS_INT
+        STS_DOUBLE
+        STS_BOOL
+        STS_STRING
+        STS_USTRING
+        STS_ARRAY_INT
+        STS_ARRAY_DOUBLE
+        STS_ARRAY_ENUM
+        STS_ARRAY_BOOL
+        STS_SET
+        STS_REF
+    
+    RECERR kRecSettingGetHandle (HSETTING root_of_query, const char *symb_name, HSETTING *ret_handle, INTBOOL *has_setting)
+    RECERR kRecSettingHasSetting (HSETTING node, INTBOOL *has_setting)
+    RECERR kRecSettingGetType (HSETTING sett, STSTYPES *type)
+    RECERR kRecSettingIsFlagSet (HSETTING sett, unsigned int flgs, INTBOOL *is_set)
+    RECERR kRecSettingGetName (HSETTING node, const char **the_name)
+    RECERR kRecSettingIsDefault (int sid, HSETTING node, INTBOOL *is_default)
+    RECERR kRecSettingGetNextChild (HSETTING the_parent, HSETTING prev_child, HSETTING *the_child)
+    RECERR kRecSettingGetCloneOrigin (HSETTING clone_node, HSETTING *origin_node)
+    RECERR kRecSettingGetInt (int sid, HSETTING sett, int *the_value)
+    RECERR kRecSettingGetDouble (int sid, HSETTING sett, double *the_value)
+    RECERR kRecSettingGetString (int sid, HSETTING sett, const char **the_value)
+    RECERR kRecSettingGetUString (int sid, HSETTING sett, const WCHAR **the_value)
+    RECERR kRecSettingGetIntArray (int sid, HSETTING sett, const int **the_value)
+    RECERR kRecSettingGetDoubleArray (int sid, HSETTING sett, const double **the_value)
+    RECERR kRecSettingGetIntArrayAt (int sid, HSETTING sett, int index, int *the_value)
+    RECERR kRecSettingGetDoubleArrayAt (int sid, HSETTING sett, int index, double *the_value)
+    RECERR kRecSettingGetIntDefault (HSETTING sett, int *the_default)
+    RECERR kRecSettingGetDoubleDefault (HSETTING sett, double *the_default)
+    RECERR kRecSettingGetStringDefault (HSETTING sett, const char **the_default)
+    RECERR kRecSettingGetUStringDefault (HSETTING sett, const WCHAR **the_default)
+    RECERR kRecSettingGetIntArrayDefault (HSETTING sett, const int **the_default)
+    RECERR kRecSettingGetDoubleArrayDefault (HSETTING sett, const double **the_default)
+    RECERR kRecSettingGetSymbolic (int sid, HSETTING sett, char *the_value, unsigned int *buffer_size)
+    RECERR kRecSettingGetIntArrayDefaultAt (HSETTING sett, int index, int *the_default)
+    RECERR kRecSettingGetDoubleArrayDefaultAt (HSETTING sett, int index, double *the_default)
+    RECERR kRecSettingGetNumberOfEnumElements (HSETTING sett, int *num_of_values)
+    RECERR kRecSettingGetEnumElement (HSETTING sett, int index, const char **str_value, int *int_value)
+    RECERR kRecSettingSetInt (int sid, HSETTING sett, int new_value)
+    RECERR kRecSettingSetDouble (int sid, HSETTING sett, double new_value)
+    RECERR kRecSettingSetString (int sid, HSETTING sett, const char *new_value)
+    RECERR kRecSettingSetUString (int sid, HSETTING sett, const WCHAR *new_value)
+    RECERR kRecSettingSetIntArray (int sid, HSETTING sett, const int *new_values)
+    RECERR kRecSettingSetDoubleArray (int sid, HSETTING sett, const double *new_values)
+    RECERR kRecSettingSetIntArrayAt (int sid, HSETTING sett, int index, int new_value)
+    RECERR kRecSettingSetDoubleArrayAt (int sid, HSETTING sett, int index, double new_value)
+    RECERR kRecSettingSetToDefault (int sid, HSETTING sett, INTBOOL whole_subtree)
+    RECERR kRecSettingSetToDefaultPlusC (int sid, HSETTING sett, INTBOOL whole_subtree)
+    RECERR kRecSettingSetArrayToDefaultAt (int sid, HSETTING sett, int index)
+    RECERR kRecSettingSetArrayToDefaultAtPlusC (int sid, HSETTING sett, int index)
+    RECERR kRecSettingGetSizeOfArray (HSETTING sett, int *the_size)
+    RECERR kRecSettingCreateInt (HSETTING *created_setting, STSTYPES type, HSETTING root_of_creation, const char *symb_name, unsigned int flags, int def_value, const SEnumTypeElement *enum_elements)
+    RECERR kRecSettingCreateDouble (HSETTING *created_setting, HSETTING root_of_creation, const char *symb_name, unsigned int flags, double def_value)
+    RECERR kRecSettingCreateString (HSETTING *created_setting, HSETTING root_of_creation, const char *symb_name, unsigned int flags, const char *def_value)
+    RECERR kRecSettingCreateUString (HSETTING *created_setting, HSETTING root_of_creation, const char *symb_name, unsigned int flags, const WCHAR *def_value)
+    RECERR kRecSettingCreateIntArray (HSETTING *created_setting, STSTYPES type, HSETTING root_of_creation, const char *symb_name, int size, unsigned int flags, const int *def_values, const SEnumTypeElement *enum_elements)
+    RECERR kRecSettingCreateDoubleArray (HSETTING *created_setting, HSETTING root_of_creation, const char *symb_name, int size, unsigned int flags, const double *def_values)
+    RECERR kRecSettingDelete (HSETTING node)
+    RECERR kRecSettingDeleteSubtree (HSETTING root_of_subtree)
+    RECERR kRecSettingClone (HSETTING root_of_cloning, const char *new_symb_name)
+    RECERR kRecSettingLoad (int sid, LPCTSTR filename)
+    RECERR kRecSettingSave (int sid, HSETTING root_of_subtree, LPCTSTR filename, INTBOOL save_all, INTBOOL append)
+    RECERR kRecSettingCopyValues (HSETTING node, int from_sid, int to_sid, INTBOOL whole_subtree)
+
+    # image file handling module
+    # --------------------------
+
+    ctypedef struct tagIMGFILEHANDLE:
+        pass
+    ctypedef tagIMGFILEHANDLE* HIMGFILE
+    ctypedef struct SIZE:
+        int cx
+        int cy
+    ctypedef SIZE* LPSIZE
+    ctypedef struct IMG_INFO:
+        SIZE Size
+        SIZE DPI
+        unsigned int BytesPerLine
+        INTBOOL IsPalette
+        WORD BitsPerPixel
+        void* DummyS
+    ctypedef IMG_INFO* LPIMG_INFO
+    ctypedef const IMG_INFO* LPCIMG_INFO
+    ctypedef struct COMPRESSED_IMG_INFO:
+        IMG_COMPRESSION Compression
+        SIZE Size
+        SIZE DPI
+        WORD BitsPerPixel
+        void * DummyS
+    ctypedef COMPRESSED_IMG_INFO* LPCOMPRESSED_IMG_INFO
+    ctypedef const COMPRESSED_IMG_INFO* LPCCOMPRESSED_IMG_INFO
+    ctypedef struct RECPAGESTRUCT:
+        pass
+    ctypedef RECPAGESTRUCT* HPAGE
     ctypedef enum IMF_FORMAT:
         FF_TIFNO = 0
         FF_TIFPB
@@ -530,7 +188,96 @@ cdef extern from "RecApiPlus.h":
         FF_JBIG
         FF_OPG
         FF_SIZE
-
+    ctypedef enum IMF_IMAGEQUALITY:
+        IMF_IMAGEQUALITY_MIN = 0
+        IMF_IMAGEQUALITY_GOOD = 1
+        IMF_IMAGEQUALITY_SUPERB = 2
+    ctypedef enum IMF_MRCLEVEL:
+        IMF_MRCLEVEL_NO = 0
+        IMF_MRCLEVEL_MIN = 1
+        IMF_MRCLEVEL_GOOD = 2
+        IMF_MRCLEVEL_SUPERB = 3 
+    ctypedef enum COMPRESSION_TRADEOFF:
+        COMPRESSION_ADVANCED
+        COMPRESSION_FAST 
+    ctypedef enum IMF_PDFCOMPATIBILITY:
+        IMF_PDF_FORCESIZE = 0
+        IMF_PDF_FORCEQUALITY = 1
+        IMF_PDF15 = 2
+        IMF_PDF14 = 3
+        IMF_PDF13 = 4
+        IMF_PDF12 = 5
+        IMF_PDF11 = 6
+        IMF_PDF10 = 7
+        IMF_PDFA = 8
+        IMF_PDFA1B = IMF_PDFA
+        IMF_PDF16 = 9
+        IMF_PDF17 = 10
+        IMF_PDFA2B = 11
+        IMF_PDFA2U = 12
+        IMF_PDFA1A = 13
+        IMF_PDFA2A = 14
+        IMF_PDFA3B = 15
+        IMF_PDFA3U = 16
+        IMF_PDFA3A = 17 
+    ctypedef enum IMF_PDFENCRYPTION:
+        IMF_PDFSECURITY_NONE
+        IMF_PDFSECURITY_STANDARD
+        IMF_PDFSECURITY_ENHANCED
+        IMF_PDFSECURITY_AES
+        IMF_PDFSECURITY_AES256
+        IMF_PDFSECURITY_AES256X 
+    ctypedef enum ENCRYPT_LEVEL:
+        ENC_NOPAS = 0
+        ENC_MUSTPAS = 1
+        ENC_MASTER = 2
+        ENC_USER = 4
+        ENC_MUSTUSER = ENC_MUSTPAS | ENC_USER
+        ENC_MUSTMASTER = ENC_MUSTPAS | ENC_MASTER
+        ENC_MUSTANY = ENC_MUSTPAS | ENC_MASTER | ENC_USER
+        ENC_NOACCESS = 8 
+    RECERR kRecOpenImgFile (LPCTSTR pFilename, HIMGFILE *pHIMGFILE, int mode, IMF_FORMAT filetype)
+    RECERR kRecCloseImgFile (HIMGFILE hIFile)
+    RECERR kRecGetPDFEncLevel (HIMGFILE hIFile, ENCRYPT_LEVEL *pEncLev)
+    RECERR kRecSetImfLoadFlags (int sid, DWORD fFlag)
+    RECERR kRecGetImfLoadFlags (int sid, DWORD *pfFlag)
+    RECERR kRecLoadImg (int sid, HIMGFILE hIFile, HPAGE *phPage, int iPage)
+    RECERR kRecLoadImgF (int sid, LPCTSTR pFilename, HPAGE *phPage, int nPage)
+    RECERR kRecLoadImgDataStream (int sid, HIMGFILE hIFile, HPAGE *phPage, int iPage)
+    RECERR kRecLoadImgDataStreamF (int sid, LPCTSTR pFilename, HPAGE *phPage, int nPage)
+    RECERR kRecDecompressImgDataStream (int sid, HPAGE hPage)
+    RECERR kRecFreeImgDataStream (int sid, HPAGE hPage)
+    RECERR kRecLoadImgM (int sid, BYTE *lpBitmap, LPCIMG_INFO lpImg, HPAGE *phPage)
+    RECERR kRecLoadImgMC (int sid, BYTE *lpBuf, size_t bufLen, LPCCOMPRESSED_IMG_INFO lpCImg, HPAGE *phPage)
+    RECERR kRecLoadImgDataStreamMC (int sid, BYTE *lpBuf, size_t bufLen, LPCOMPRESSED_IMG_INFO lpCImg, HPAGE *phPage)
+    RECERR kRecSetCompressionLevel (int sid, int CompressionLevel)
+    RECERR kRecGetCompressionLevel (int sid, int *pCompressionLevel)
+    RECERR kRecSetCompressionTradeoff (int sid, COMPRESSION_TRADEOFF CompressionTradeoff)
+    RECERR kRecGetCompressionTradeoff (int sid, COMPRESSION_TRADEOFF *pCompressionTradeoff)
+    RECERR kRecSetMRCCompressionSettingsFromLevel (int sid, int CompressionLevel, COMPRESSION_TRADEOFF CompressionTradeOff)
+    RECERR kRecSetJPGQuality (int sid, int nQuality)
+    RECERR kRecGetJPGQuality (int sid, int *pnQuality)
+    RECERR kRecSaveImg (int sid, HIMGFILE hIFile, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend)
+    RECERR kRecSaveImgForce (int sid, HIMGFILE hIFile, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend)
+    RECERR kRecSaveImgF (int sid, LPCTSTR pFilename, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX img, INTBOOL bAppend)
+    RECERR kRecSaveImgForceF (int sid, LPCTSTR pFilename, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend)
+    RECERR kRecSaveImgArea (int sid, HIMGFILE hIFile, IMF_FORMAT format, HPAGE hPage, IMAGEINDEX iiImg, LPCRECT pRect, INTBOOL append)
+    RECERR kRecSaveImgAreaF (int sid, LPCTSTR pFilename, IMF_FORMAT format, HPAGE hPage, IMAGEINDEX iiImg, LPCRECT pRect, INTBOOL append)
+    RECERR kRecSetPdfPassword (HIMGFILE hIFile, LPCTSTR pwd)
+    RECERR kRecSetPdfTagInfo (int sid, INTBOOL bUseTagInfo)
+    RECERR kRecGetPdfTagInfo (int sid, INTBOOL *pbUseTagInfo)
+    RECERR kRecGetImgFilePageCount (HIMGFILE hIFile, int *lpPageCount)
+    RECERR kRecGetImgFilePageInfo (int sid, HIMGFILE hIFile, int nPage, LPIMG_INFO pImg, IMF_FORMAT *pFormat)
+    RECERR kRecCopyImgFilePage (int sid, HIMGFILE hIFileDst, int ndstPage, HIMGFILE hIFileSrc, int nsrcPage)
+    RECERR kRecDeleteImgFilePage (int sid, HIMGFILE hIFile, int nPage)
+    RECERR kRecInsertImgFilePage (int sid, HPAGE hPage, IMAGEINDEX iiImg, HIMGFILE hIFile, int nPage, IMF_FORMAT format)
+    RECERR kRecIsMultipageImgFileFormat (IMF_FORMAT imgfileformat, INTBOOL *bEnabled)
+    RECERR kRecMatchImgFileFormat (int sid, HPAGE hPage, IMAGEINDEX iiImg, IMF_FORMAT imgfileformat, INTBOOL *match)
+    RECERR kRecPackImgFile (int sid, LPCTSTR pFileName)
+    RECERR kRecUpdateImgFilePage (int sid, HPAGE hPage, IMAGEINDEX iiImg, HIMGFILE hIFile, int nPage, IMF_FORMAT format)
+    RECERR kRecReplaceImgFilePage (int sid, HIMGFILE hIFileDst, int ndstPage, HIMGFILE hIFileSrc, int nsrcPage)
+    RECERR kRecGetImgFilePageIndex (HIMGFILE hIFile, int *pIndex)
+        
     ctypedef enum FILLINGMETHOD:
         FM_DEFAULT = 0
         FM_OMNIFONT
@@ -607,17 +354,6 @@ cdef extern from "RecApiPlus.h":
         WT_LEFTTEXT
         WT_RIGHTTEXT
 
-    ctypedef enum RETCODEINFO:
-        RET_OK = 0
-        RET_WARNING
-        RET_MEMORY_ERROR
-        RET_FILE_ERROR
-        RET_SCANNER_ERROR
-        RET_IMAGE_ERROR
-        RET_OCR_ERROR
-        RET_TEXT_ERROR
-        RET_OTHER_ERROR
-        RET_UNKNOWN = -1
 
     ctypedef enum DTXTOUTPUTFORMATS:
         DTXT_TXTS
@@ -627,27 +363,9 @@ cdef extern from "RecApiPlus.h":
         DTXT_XMLCOORD
         DTXT_BINARY
 
-    ctypedef struct tagIMGFILEHANDLE:
-        pass
-    ctypedef tagIMGFILEHANDLE* HIMGFILE
 
-    ctypedef struct RECPAGESTRUCT:
-        pass
-    ctypedef RECPAGESTRUCT* HPAGE
 
-    ctypedef struct SIZE:
-        int cx
-        int cy
-    ctypedef SIZE* LPSIZE
 
-    ctypedef struct IMG_INFO:
-        SIZE Size
-        SIZE DPI
-        unsigned int BytesPerLine
-        INTBOOL IsPalette
-        WORD BitsPerPixel
-        void* DummyS
-    ctypedef IMG_INFO* LPIMG_INFO
 
     ctypedef struct RECT:
         int left
@@ -670,16 +388,50 @@ cdef extern from "RecApiPlus.h":
     ctypedef ZONE* LPZONE
     ctypedef const ZONE* LPCZONE
 
-    # ctypedef struct LETTER:
-    #     WORD left
-    #     WORD top
-    #     WORD width
-    #     WORD height
-    #     WORD baseLine
-    #     WORD zone
-    #     WCHAR code
-    # ctypedef LETTER* LPLETTER
-    # ctypedef const LETTER* LPCLETTER
+    # recognition data handling module
+    # --------------------------------
+
+    ctypedef struct LSPC:
+        WORD spcCount
+        BYTE spcType
+        BYTE Res
+
+    ctypedef union LETTER_UNION:
+        DWORD ndxSuggestions
+        LSPC spcInfo
+
+    ctypedef struct LETTER:
+        WORD left
+        WORD top
+        WORD width
+        WORD height
+        float pointSize
+        WORD capHeight
+        WORD baseLine
+        WORD zone
+        WCHAR code
+        BYTE err
+        BYTE reserved_b
+        BYTE cntChoices
+        BYTE cntSuggestions
+        DWORD ndxChoices
+        LETTER_UNION un
+    ctypedef LETTER* LPLETTER
+    ctypedef const LETTER* LPCLETTER
+    ctypedef enum LETTERSTRENGTH:
+        LTS_FINAL 
+        LTS_STRONG
+        LTS_MEDIUM
+        LTS_WEAK
+        LTS_SIZE
+    ctypedef DWORD REC_COLOR
+    RECERR kRecGetLetters (HPAGE hPage, IMAGEINDEX iiImage, LPLETTER *ppLetter, LPLONG pLettersLength)
+    RECERR kRecGetLetterPalette (HPAGE hPage, REC_COLOR **ppColours, LPLONG pNum)
+    RECERR kRecGetChoiceStr (HPAGE hPage, WCHAR **ppChoices, LPLONG pLength)
+    RECERR kRecGetSuggestionStr (HPAGE hPage, WCHAR **ppSuggestions, LPLONG pLength)
+    RECERR kRecGetFontFaceStr (HPAGE hPage, char **ppFontFaces, LPLONG pLength)
+    RECERR kRecSetLetters (LETTERSTRENGTH towhere, HPAGE hPage, IMAGEINDEX iiImage, LPCLETTER pLetter, LONG LettersLength)
+    RECERR kRecFreeRecognitionData (HPAGE hPage)
 
     RECERR kRecFreeImg(HPAGE hPage)
     RECERR kRecQuit()
@@ -698,9 +450,6 @@ cdef extern from "RecApiPlus.h":
     RECERR kRecGetZoneInfo(HPAGE hPage, IMAGEINDEX iiImg, LPZONE pZone, int nZone)
     RECERR kRecDeleteAllZones(HPAGE hPage)
     RECERR kRecInsertZone(HPAGE hPage, IMAGEINDEX iiImg, LPCZONE pZone, int nZone)
-    RETCODEINFO kRecGetErrorInfo(RECERR ErrCode, LPCSTR *lpErrSym)
-    RECERR kRecGetLastError(int *pErrExt, LPTSTR pErrStr, int buflen)
-    RECERR kRecGetErrorUIText(RECERR ErrCode, int ErrExt, LPCTSTR lpErrStr, LPTSTR lpErrUIText, int *pBuffLen)
     RECERR kRecSetDTXTFormat(int sid, DTXTOUTPUTFORMATS dFormat)
     RECERR kRecConvert2DTXT(int sid, const HPAGE *ahPage, int nPage, LPCTSTR pFilename)
 
