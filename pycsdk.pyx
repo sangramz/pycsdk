@@ -3,170 +3,181 @@
 import os
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdlib cimport malloc, free
+from cpython.ref cimport PyObject
+from PIL import Image
+
+
+cdef extern from "Python.h":
+    cdef int PyUnicode_2BYTE_KIND "PyUnicode_2BYTE_KIND"
+    PyObject* PyUnicode_FromKindAndData(int kind, const void *buffer, Py_ssize_t size)
+    PyObject* PyBytes_FromStringAndSize(const char *v, Py_ssize_t len)
+
+SID = 0
+
 
 cdef class CSDK:
-    cdef HIMGFILE pHIMGFILE
-    cdef HPAGE hPAGE
-    cdef readonly int page_count
-    cdef readonly int zone_count
-    cdef readonly unsigned int current_page
-    cdef readonly int sizex
-    cdef readonly int sizey
-    cdef readonly int dpix
-    cdef readonly int dpiy
-    cdef RECERR err_code
-    cdef ZONE zone
-    cdef public:
-        object scanned
+        
+    @staticmethod
+    def check_err(rc, api_function):
+        if rc != 0:
+            raise Exception('OmniPage: {} error: {:08x}'.format(api_function, rc))
 
     def __cinit__(self,  company_name, product_name):
-        # Initialize the scanning software
         cdef LPCSTR pCompanyName = company_name
         cdef LPCSTR pProductName = product_name
-        self.err_code = RecInitPlus(pCompanyName, pProductName)
-        if self.err_code != 0:
-            raise Exception("OmniPage: initialization error: {:08x}".format(self.err_code))
-        self.scanned = False
+        CSDK.check_err(RecInitPlus(pCompanyName, pProductName), 'RecInitPlus')
+        
+        # output files as UTF-8 without BOM
+        CSDK.check_err(kRecSetCodePage(SID, 'UTF-8'), 'kRecSetCodePage')
+        self.set_setting('Kernel.DTxt.UnicodeFileHeader', '')
+        self.set_setting('Kernel.DTxt.txt.LineBreak', '\n')
+        
+        # enable all languages
+        CSDK.check_err(kRecManageLanguages(SID, SET_LANG, LANG_ALL_LATIN), 'kRecManageLanguages')
+        
+        # keep original image colors
+        #CSDK.check_err(kRecSetImgConvMode(SID, CNV_NO), 'kRecSetImgConvMode')
+        
 
     def __dealloc__(self):
-        # if we've loaded an image, free it
-        if self.hPAGE:
-            self.free_image()
-        # Deallocate and quit
-        self.err_code = RecQuitPlus()
-        if self.err_code != 0:
-            raise Exception("OmniPage: quit error: {:08x}".format(self.err_code))
+        CSDK.check_err(RecQuitPlus(), 'RecQuitPlus')
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
         pass
+        
+    def set_setting(self, setting_name, setting_value):
+        cdef HSETTING setting
+        cdef INTBOOL hasSetting
+        CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
+        if hasSetting == 0:
+            raise Exception('OmniPage: unknown setting')
+        if isinstance(setting_value, int):
+            CSDK.check_err(kRecSettingSetInt(SID, setting, setting_value), 'kRecSettingSetInt');
+        elif isinstance(setting_value, str):
+            CSDK.check_err(kRecSettingSetString(SID, setting, setting_value), 'kRecSettingSetString');
+        else:
+            raise Exception('OmniPage: unsupported setting value type: {}'.format(setting_value))
 
-    def load_file(self, input_file):
-        cdef LPCSTR in_file = input_file
-        # Open the image file
-        self.err_code = kRecOpenImgFile(input_file, &self.pHIMGFILE, 0, FF_TIFNO)
-        if self.err_code != 0:
-            raise Exception("OmniPage: file open error: {:08x}".format(self.err_code))
-        # Get a page count
-        self.err_code = kRecGetImgFilePageCount(self.pHIMGFILE, &self.page_count)
-        if self.err_code != 0:
-            raise Exception("OmniPage: page count error: {:08x}".format(self.err_code))
-        self.current_page = 0
+    def get_setting_int(self, setting_name):
+        cdef HSETTING setting
+        cdef INTBOOL hasSetting
+        CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
+        if hasSetting == 0:
+            raise Exception('OmniPage: unknown setting')
+        cdef int setting_value
+        CSDK.check_err(kRecSettingGetInt(SID, setting, &setting_value), 'kRecSettingGetInt');
+        return setting_value
 
-    def load_image(self, page_number):
-        # Make sure we've loaded a file
-        if not self.pHIMGFILE:
-            raise Exception("pyCSDK: load_image called without a loaded file.")
-        # Load a single image from the image file
-        self.err_code = kRecLoadImg(0, self.pHIMGFILE, &self.hPAGE, page_number)
-        if self.err_code != 0:
-            raise Exception("OmniPage: image load error: {:08x}".format(self.err_code))
-        cdef IMG_INFO imginf
-        self.err_code = kRecGetImgInfo(0, self.hPAGE, II_CURRENT, &imginf)
-        if self.err_code != 0:
-            raise Exception("OmniPage: image info error: {:08x}".format(self.err_code))
-        self.sizex = imginf.Size.cx
-        self.sizey = imginf.Size.cy
-        self.dpix = imginf.DPI.cx
-        self.dpiy = imginf.DPI.cy
-        self.current_page = page_number
+    def get_setting_string(self, setting_name):
+        cdef HSETTING setting
+        cdef INTBOOL hasSetting
+        CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
+        if hasSetting == 0:
+            raise Exception('OmniPage: unknown setting')
+        cdef const WCHAR* setting_value
+        CSDK.check_err(kRecSettingGetUString(SID, setting, &setting_value), 'kRecSettingGetUString');
+        length = 0
+        while setting_value[length] != 0:
+            length += 1
+        cdef PyObject* o = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, setting_value, length)
+        return <object> o
 
-    def find_zones(self):
-        # Make sure we've loaded an image from the file
-        if not self.hPAGE:
-            raise Exception("pyCSDK: find_zones called without a loaded image.")
-        # Auto recognize the zones in an image
-        self.err_code = kRecLocateZones(0, self.hPAGE)
-        if self.err_code != 0:
-            raise Exception("OmniPage: locate zones: {:08x}".format(self.err_code))
-        self.err_code = kRecRecognize(0, self.hPAGE, NULL)
-        if self.err_code != 0:
-            raise Exception("OmniPage: zone recognize: {:08x}".format(self.err_code))
-        self.err_code = kRecCopyOCRZones(self.hPAGE)
-        if self.err_code != 0:
-            raise Exception("OmniPage: zone copy: {:08x}".format(self.err_code))
-        self.err_code = kRecGetZoneCount(self.hPAGE, &self.zone_count)
-        if self.err_code != 0:
-            raise Exception("OmniPage: get zone count: {:08x}".format(self.err_code))
-        # Return the list of zones found
-        return self.get_zones()
+    def set_rm_tradeoff(self, tradeoff):
+        CSDK.check_err(kRecSetRMTradeoff(SID, tradeoff), 'kRecSetRMTradeoff')
 
-    def get_zones(self):
-        zone_list = []
-        # Iterate through the zones, building a python list
-        for x in range(self.zone_count):
-            self.err_code = kRecGetZoneInfo(self.hPAGE, II_CURRENT, &self.zone, x)
-            if self.err_code != 0:
-                raise Exception("OmniPage: get zone info: {:08x}".format(self.err_code))
-            zone_list.append(self.zone.copy())
-        return zone_list
+    def set_single_language_detection(self, flag):
+        cdef INTBOOL setting = 1 if flag == True else 0       
+        CSDK.check_err(kRecSetSingleLanguageDetection(SID, setting), 'kRecSetSingleLanguageDetection')
+        
+    def open_file(self, file_path):
+        return File(self, file_path)
 
-    def write_zones(self, zones):
-        cdef ZONE* pzone
-        # Make sure we've loaded an image
-        if not self.hPAGE:
-            raise Exception("pyCSDK: write_zones called without a loaded image.")
-        # Delete all the existing zones
-        self.err_code = kRecDeleteAllZones(self.hPAGE)
-        if self.err_code != 0:
-            raise Exception("OmniPage: delete zones error: {:08x}".format(self.err_code))
-        # Write the new zone list to the SDK data structure
-        for i, z in enumerate(zones):
-            # I pray that omnipage frees this since it's impossible to tell if it does or does not
-            pzone = <ZONE*> malloc(sizeof(ZONE))
-            pzone[0].type = z['type']
-            pzone[0].rectBBox.left = z['rectBBox']['left']
-            pzone[0].rectBBox.right = z['rectBBox']['right']
-            pzone[0].rectBBox.top = z['rectBBox']['top']
-            pzone[0].rectBBox.bottom = z['rectBBox']['bottom']
-            pzone[0].userdata = z['userdata']
-            pzone[0].chk_control = z['chk_control']
-            pzone[0].fm = z['fm']
-            pzone[0].rm = z['rm']
-            pzone[0].filter = z['filter']
-            pzone[0].chk_fn= z['chk_fn']
-            pzone[0].chk_sect = z['chk_sect']
 
-            self.err_code = kRecInsertZone(self.hPAGE, II_CURRENT, pzone, -1)
-            if self.err_code != 0:
-                raise Exception("OmniPage: insert zone error: {:08x}".format(self.err_code))
+cdef class File:
+    cdef CSDK sdk
+    cdef HIMGFILE handle
+    cdef public:
+        object nb_pages
 
-    def scan(self):
-        # Make sure we've loaded an image
-        if not self.hPAGE:
-            raise Exception("pyCSDK: scan called without a loaded image.")
-        # do the actual scanning
-        self.err_code = kRecRecognize(0, self.hPAGE, NULL)
-        if self.err_code != 0:
-            raise Exception("OmniPage: zone recognize: {:08x}".format(self.err_code))
-        self.scanned = True
+    def __cinit__(self, CSDK sdk, file_path):
+        self.sdk = sdk
+        CSDK.check_err(kRecOpenImgFile(file_path, &self.handle, 0, FF_TIFNO), 'kRecOpenImgFile')
+        cdef int n
+        CSDK.check_err(kRecGetImgFilePageCount(self.handle, &n), 'kRecGetImgFilePageCount')
+        self.nb_pages = n
 
-    def write_scan(self, output_file, DTXTOUTPUTFORMATS format):
-        # Check to see if we've scanned the image already, do so if we haven't
-        if not self.scanned:
-           self.scan()
-           self.scanned = True
-        cdef LPCSTR pFilename = output_file
-        # Set the output format
-        self.err_code = kRecSetDTXTFormat(0, format)
-        if self.err_code != 0:
-             raise Exception("OmniPage: set DTXT format: {:08x}".format(self.err_code))
-        # Write the output to a file
-        self.err_code = kRecConvert2DTXT(0, &self.hPAGE, self.current_page, pFilename)
-        if self.err_code != 0:
-            raise Exception("OmniPage: write DTXT output: {:08x}".format(self.err_code))
+    def __dealloc__(self):
+        CSDK.check_err(kRecCloseImgFile(self.handle), 'kRecCloseImgFile')
 
-    def write_csv(self, output_file):
-        self.write_scan(output_file, DTXT_TXTCSV)
+    def __enter__(self):
+        return self
 
-    def write_xml(self, output_file):
-        self.write_scan(output_file, DTXT_XMLCOORD)
+    def __exit__(self, type, value, traceback):
+        pass
+        
+    def open_page(self, page_id):
+        return Page(self, page_id)
+        
 
-    def free_image(self):
-        # Make sure we actually have something to free
-        if self.hPAGE:
-            self.err_code = kRecFreeImg(self.hPAGE)
-            if self.err_code != 0:
-                raise Exception("OmniPage: free error: {:08x}".format(self.err_code))
+cdef class Page:
+    cdef CSDK sdk
+    cdef HPAGE handle
+    cdef public:
+        object page_id
+        object zones
+        object letters
+        object image
+
+    def __cinit__(self, File file, page_id):
+        self.sdk = file.sdk
+        self.page_id = page_id
+        CSDK.check_err(kRecLoadImg(SID, file.handle, &self.handle, page_id), 'kRecLoadImg')
+
+    def __dealloc__(self):
+        CSDK.check_err(kRecFreeImg(self.handle), 'kRecFreeImg')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        pass
+        
+    def process(self):
+        CSDK.check_err(kRecPreprocessImg(SID, self.handle), 'kRecPreprocessImg')
+        CSDK.check_err(kRecLocateZones(SID, self.handle), 'kRecLocateZones')
+        CSDK.check_err(kRecRecognize(SID, self.handle, NULL), 'kRecRecognize')
+        cdef int nb_zones
+        CSDK.check_err(kRecGetOCRZoneCount(self.handle, &nb_zones), 'kRecGetOCRZoneCount')
+        self.zones = []
+        cdef ZONE zone
+        for zone_id in range(nb_zones):
+            CSDK.check_err(kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id), 'kRecGetOCRZoneInfo')
+            self.zones.append(zone.copy())
+        cdef LETTER* pLetters
+        cdef LONG nb_letters
+        CSDK.check_err(kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters), 'kRecGetLetters')
+        self.letters = []
+        for letter_id in range(nb_letters):
+            self.letters.append(pLetters[letter_id].copy())
+        cdef IMG_INFO img_info
+        cdef BYTE* bitmap
+        CSDK.check_err(kRecGetImgArea(SID, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap), 'kRecGetImgArea')
+        cdef PyObject* o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
+        bytes = <object> o
+        CSDK.check_err(kRecFree(bitmap), 'kRecFree')
+        size = (img_info.Size.cx, img_info.Size.cy)
+        cdef BYTE[768] palette
+        if img_info.IsPalette == 1:
+            CSDK.check_err(kRecGetImgPalette(SID, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
+        if img_info.BitsPerPixel == 1:
+            self.image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
+        elif img_info.BitsPerPixel == 8:
+            # TODO use palette
+            self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', 0, 1)
+        elif img_info.BitsPerPixel == 24:
+            self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', 0, 1)
+        else:
+            raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
