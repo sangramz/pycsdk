@@ -1147,22 +1147,34 @@ cdef extern from "KernelApi.h":
         DWORD ndxSuggestions
         LSPC spcInfo
     ctypedef struct LETTER:
-        WORD left
-        WORD top
-        WORD width
-        WORD height
+        WORD  left
+        WORD  top
+        WORD  width
+        WORD  height
         float pointSize
-        WORD capHeight
-        WORD baseLine
-        WORD zone
+        WORD  capHeight
+        WORD  baseLine
+        WORD  zone
         WCHAR code
-        BYTE err
-        BYTE reserved_b
-        BYTE cntChoices
-        BYTE cntSuggestions
+        BYTE  err
+        BYTE  reserved_b
+        BYTE  cntChoices
+        BYTE  cntSuggestions
         DWORD ndxChoices
         DWORD ndxSuggestions
         #LETTER_UNION un
+        WORD  fontAttrib
+        WORD  ndxFontFace
+        DWORD info
+        WORD  makeup
+        BYTE  widthULdot
+        BYTE  widthULgap
+        WORD  cellNum
+        BYTE  ndxFGColor
+        BYTE  ndxBGColor
+        short lang
+        short lang2
+        DWORD ndxExt
     ctypedef LETTER* LPLETTER
     ctypedef const LETTER* LPCLETTER
     RECERR kRecGetLetters(HPAGE hPage, IMAGEINDEX iiImage, LPLETTER *ppLetter, LPLONG pLettersLength)

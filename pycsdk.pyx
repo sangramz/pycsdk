@@ -121,7 +121,49 @@ cdef class File:
     def open_page(self, page_id):
         return Page(self, page_id)
         
+cdef class Letter:
+    cdef public:
+        object top
+        object left
+        object bottom
+        object right
+        object font_size
+        object cell_num
+        object zone_index
+        object code
+        object choices
 
+    def __cinit__(self, LETTER letter, choices, dpi):
+        self.top = letter.top
+        self.left = letter.left
+        self.bottom = letter.top + letter.height
+        self.right = letter.left + letter.width
+        self.font_size = letter.capHeight * 100.0 / dpi
+        self.cell_num = letter.cellNum
+        self.zone_index = letter.zone
+        cdef PyObject* o
+        cdef WCHAR* code = &letter.code
+        self.code = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, code, 1)
+        self.choices = choices
+            
+    def __dealloc__(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        pass
+
+    @staticmethod 
+    cdef build(LETTER letter, LPWCH pChoices, dpi):
+        if letter.code == 0x0fffd: #UNICODE_REJECTED
+            return None
+        else:
+            choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices, letter.cntChoices)
+            return Letter(letter, choices, dpi)
+     
+  
 cdef class Page:
     cdef CSDK sdk
     cdef HPAGE handle
@@ -146,24 +188,14 @@ cdef class Page:
         pass
         
     def process(self):
+        # preprocess image, locate zones and perform recognition
         CSDK.check_err(kRecPreprocessImg(SID, self.handle), 'kRecPreprocessImg')
         CSDK.check_err(kRecLocateZones(SID, self.handle), 'kRecLocateZones')
         CSDK.check_err(kRecRecognize(SID, self.handle, NULL), 'kRecRecognize')
-        cdef int nb_zones
-        CSDK.check_err(kRecGetOCRZoneCount(self.handle, &nb_zones), 'kRecGetOCRZoneCount')
-        self.zones = []
-        cdef ZONE zone
-        for zone_id in range(nb_zones):
-            CSDK.check_err(kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id), 'kRecGetOCRZoneInfo')
-            self.zones.append(zone.copy())
-        cdef LETTER* pLetters
-        cdef LONG nb_letters
-        CSDK.check_err(kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters), 'kRecGetLetters')
-        self.letters = []
-        for letter_id in range(nb_letters):
-            self.letters.append(pLetters[letter_id].copy())
+        
+        # retrieve image
         cdef IMG_INFO img_info
-        cdef BYTE* bitmap
+        cdef LPBYTE bitmap
         CSDK.check_err(kRecGetImgArea(SID, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap), 'kRecGetImgArea')
         cdef PyObject* o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
         bytes = <object> o
@@ -181,3 +213,31 @@ cdef class Page:
             self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', 0, 1)
         else:
             raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
+
+        # retrieve OCR zones
+        cdef int nb_zones
+        CSDK.check_err(kRecGetOCRZoneCount(self.handle, &nb_zones), 'kRecGetOCRZoneCount')
+        self.zones = []
+        cdef ZONE zone
+        for zone_id in range(nb_zones):
+            CSDK.check_err(kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id), 'kRecGetOCRZoneInfo')
+            self.zones.append(zone.copy())
+
+        # retrieve letter choices
+        cdef LPWCH pChoices
+        cdef LONG nbChoices
+        CSDK.check_err(kRecGetChoiceStr(self.handle, &pChoices, &nbChoices), 'kRecGetChoiceStr')
+
+        # retrieve letters
+        cdef LPLETTER pLetters
+        cdef LONG nb_letters
+        CSDK.check_err(kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters), 'kRecGetLetters')
+        self.letters = []
+        for letter_id in range(nb_letters):
+            letter = Letter.build(pLetters[letter_id], pChoices, img_info.DPI.cy)
+            if letter is not None:
+                self.letters.append(letter)
+                
+        # cleanup
+        CSDK.check_err(kRecFree(pLetters), 'kRecFree')
+        CSDK.check_err(kRecFree(pChoices), 'kRecFree')
