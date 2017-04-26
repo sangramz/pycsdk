@@ -15,15 +15,15 @@ for root, dirs, files in os.walk(".", topdown=False):
         if (name == "build"):
             shutil.rmtree(name)
 
-# build "myext.so" python extension to be added to "PYTHONPATH" afterwards...
+# build "pycsdk.so" python extension to be added to "PYTHONPATH" afterwards...
 setup(
     name='pycsdk',
+    version='0.0.1',
     cmdclass = {'build_ext': build_ext},
     ext_modules = [
         Extension("pycsdk",
                   sources=["pycsdk.pyx"],
-                  libraries=["kernelapi", "recpdf", "recapiplus"],          # refers to "libexternlib.so"
-                  # language="c++",                   # remove this if C and not C++
+                  libraries=["kernelapi", "recpdf", "recapiplus"],
                   extra_compile_args=["-I/usr/local/include/nuance-omnipage-csdk-20.1", "-O2"],
                   extra_link_args=["-L/usr/local/lib/nuance-omnipage-csdk-lib64-20.1"]
              )
