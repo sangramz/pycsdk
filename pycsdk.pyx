@@ -5,6 +5,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdlib cimport malloc, free
 from cpython.ref cimport PyObject
 from PIL import Image
+from pprint import pformat
 
 
 cdef extern from "Python.h":
@@ -120,50 +121,89 @@ cdef class File:
         
     def open_page(self, page_id):
         return Page(self, page_id)
-        
-cdef class Letter:
-    cdef public:
-        object top
-        object left
-        object bottom
-        object right
-        object font_size
-        object cell_num
-        object zone_index
-        object code
-        object choices
 
-    def __cinit__(self, LETTER letter, choices, dpi):
-        self.top = letter.top
-        self.left = letter.left
-        self.bottom = letter.top + letter.height
-        self.right = letter.left + letter.width
-        self.font_size = letter.capHeight * 100.0 / dpi
-        self.cell_num = letter.cellNum
-        self.zone_index = letter.zone
-        cdef PyObject* o
-        cdef WCHAR* code = &letter.code
-        self.code = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, code, 1)
+
+class Letter:
+
+    def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, choices, lang, confidence,
+                 italic, bold, end_word, end_line, end_cell, end_row, in_cell):
+        self.top = top
+        self.left = left
+        self.bottom = bottom
+        self.right = right
+        self.font_size = font_size
+        self.cell_num = cell_num
+        self.zone_id = zone_id
+        self.code = code
         self.choices = choices
+        self.lang = lang
+        self.confidence = confidence
+        self.italic = italic
+        self.bold = bold
+        self.end_word = end_word
+        self.end_line = end_line
+        self.end_cell = end_cell
+        self.end_row = end_row
+        self.in_cell = in_cell
             
-    def __dealloc__(self):
-        pass
+    def __repr__(self):
+        return pformat(vars(self))
 
-    def __enter__(self):
-        return self
 
-    def __exit__(self, type, value, traceback):
-        pass
+cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
+    if letter.code == 0x0fffd or letter.width == 0: # UNICODE_REJECTED and dummy space
+        return None
+    cdef WCHAR* pCode = &letter.code
+    code = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pCode, 1)
+    if letter.cntChoices > 1:
+        choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices, letter.cntChoices - 1)
+    else:
+        choices = ''
+    cdef BYTE err = letter.err
+    if err >= 100:
+        confidence = 0
+    else:
+        confidence = 100 - err
+    italic = True if letter.fontAttrib & 0x0002 else False
+    bold = True if letter.fontAttrib & 0x0008 else False
+    end_word = True if letter.makeup & 0x0004 else False
+    end_line = True if letter.makeup & 0x0001 else False
+    end_cell = True if letter.makeup & 0x0020 else False
+    end_row = True if letter.makeup & 0x0040 else False
+    in_cell = True if letter.makeup & 0x0080 else False
+    return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
+                  letter.cellNum, letter.zone, code, choices, letter.lang, confidence,
+                  italic, bold, end_word, end_line, end_cell, end_row, in_cell)
 
-    @staticmethod 
-    cdef build(LETTER letter, LPWCH pChoices, dpi):
-        if letter.code == 0x0fffd: #UNICODE_REJECTED
-            return None
-        else:
-            choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices, letter.cntChoices)
-            return Letter(letter, choices, dpi)
-     
-  
+
+class Zone:
+    def __init__(self, top, left, bottom, right, type):
+        self.top = top
+        self.left = left
+        self.bottom = bottom
+        self.right = right
+        self.type = type
+
+    def __repr__(self):
+        return pformat(vars(self))
+
+
+cdef build_zone(ZONE zone):
+    switcher = {
+        WT_FLOW: "WT_FLOW",
+        WT_TABLE: "WT_TABLE",
+        WT_GRAPHIC: "WT_GRAPHIC",
+        WT_AUTO: "WT_AUTO",
+        WT_IGNORE: "WT_IGNORE",
+        WT_FORM: "WT_FORM",
+        WT_VERTTEXT: "WT_VERTTEXT",
+        WT_LEFTTEXT: "WT_LEFTTEXT",
+        WT_RIGHTTEXT: "WT_RIGHTTEXT"
+    }
+    return Zone(zone.rectBBox.top, zone.rectBBox.left, zone.rectBBox.bottom, zone.rectBBox.right,
+                switcher.get(zone.type, 'UNKNOWN_'.format(zone.type)))
+
+
 cdef class Page:
     cdef CSDK sdk
     cdef HPAGE handle
@@ -179,6 +219,7 @@ cdef class Page:
         CSDK.check_err(kRecLoadImg(SID, file.handle, &self.handle, page_id), 'kRecLoadImg')
 
     def __dealloc__(self):
+        # free image and recognition data
         CSDK.check_err(kRecFreeImg(self.handle), 'kRecFreeImg')
 
     def __enter__(self):
@@ -188,9 +229,8 @@ cdef class Page:
         pass
         
     def process(self):
-        # preprocess image, locate zones and perform recognition
+        # preprocess image and perform recognition
         CSDK.check_err(kRecPreprocessImg(SID, self.handle), 'kRecPreprocessImg')
-        CSDK.check_err(kRecLocateZones(SID, self.handle), 'kRecLocateZones')
         CSDK.check_err(kRecRecognize(SID, self.handle, NULL), 'kRecRecognize')
         
         # retrieve image
@@ -221,7 +261,7 @@ cdef class Page:
         cdef ZONE zone
         for zone_id in range(nb_zones):
             CSDK.check_err(kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id), 'kRecGetOCRZoneInfo')
-            self.zones.append(zone.copy())
+            self.zones.append(build_zone(zone))
 
         # retrieve letter choices
         cdef LPWCH pChoices
@@ -234,10 +274,11 @@ cdef class Page:
         CSDK.check_err(kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters), 'kRecGetLetters')
         self.letters = []
         for letter_id in range(nb_letters):
-            letter = Letter.build(pLetters[letter_id], pChoices, img_info.DPI.cy)
+            letter = build_letter(pLetters[letter_id], pChoices, img_info.DPI.cy)
             if letter is not None:
                 self.letters.append(letter)
                 
         # cleanup
         CSDK.check_err(kRecFree(pLetters), 'kRecFree')
         CSDK.check_err(kRecFree(pChoices), 'kRecFree')
+        
