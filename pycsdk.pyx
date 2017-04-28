@@ -6,6 +6,7 @@ from libc.stdlib cimport malloc, free
 from cpython.ref cimport PyObject
 from PIL import Image
 from pprint import pformat
+from threading import RLock
 
 
 cdef extern from "Python.h":
@@ -13,35 +14,43 @@ cdef extern from "Python.h":
     PyObject* PyUnicode_FromKindAndData(int kind, const void *buffer, Py_ssize_t size)
     PyObject* PyBytes_FromStringAndSize(const char *v, Py_ssize_t len)
 
-SID = 0
+csdk_lock = RLock()
+nb_csdk_instances = 0
 
 
 cdef class CSDK:
-        
+    cdef int sid
+    
     @staticmethod
     def check_err(rc, api_function):
         if rc != 0:
             raise Exception('OmniPage: {} error: {:08x}'.format(api_function, rc))
 
     def __cinit__(self,  company_name, product_name):
-        cdef LPCSTR pCompanyName = company_name
-        cdef LPCSTR pProductName = product_name
-        CSDK.check_err(RecInitPlus(pCompanyName, pProductName), 'RecInitPlus')
+        global nb_csdk_instances
+        with csdk_lock:
+            if nb_csdk_instances == 0:
+                CSDK.check_err(RecInitPlus(company_name, product_name), 'RecInitPlus')
+            nb_csdk_instances += 1
+            
+        # create a settings collection for this CSDK instance
+        self.sid = kRecCreateSettingsCollection(-1)
         
         # output files as UTF-8 without BOM
-        CSDK.check_err(kRecSetCodePage(SID, 'UTF-8'), 'kRecSetCodePage')
+        CSDK.check_err(kRecSetCodePage(self.sid, 'UTF-8'), 'kRecSetCodePage')
         self.set_setting('Kernel.DTxt.UnicodeFileHeader', '')
         self.set_setting('Kernel.DTxt.txt.LineBreak', '\n')
         
         # enable all languages
-        CSDK.check_err(kRecManageLanguages(SID, SET_LANG, LANG_ALL_LATIN), 'kRecManageLanguages')
-        
-        # keep original image colors
-        #CSDK.check_err(kRecSetImgConvMode(SID, CNV_NO), 'kRecSetImgConvMode')
-        
+        CSDK.check_err(kRecManageLanguages(self.sid, SET_LANG, LANG_ALL_LATIN), 'kRecManageLanguages')        
 
     def __dealloc__(self):
-        CSDK.check_err(RecQuitPlus(), 'RecQuitPlus')
+        global nb_csdk_instances
+        CSDK.check_err(kRecDeleteSettingsCollection(self.sid), 'kRecDeleteSettingsCollection')
+        with csdk_lock:
+            nb_csdk_instances -= 1
+            if nb_csdk_instances == 0:
+                CSDK.check_err(RecQuitPlus(), 'RecQuitPlus')
 
     def __enter__(self):
         return self
@@ -56,9 +65,9 @@ cdef class CSDK:
         if hasSetting == 0:
             raise Exception('OmniPage: unknown setting')
         if isinstance(setting_value, int):
-            CSDK.check_err(kRecSettingSetInt(SID, setting, setting_value), 'kRecSettingSetInt');
+            CSDK.check_err(kRecSettingSetInt(self.sid, setting, setting_value), 'kRecSettingSetInt');
         elif isinstance(setting_value, str):
-            CSDK.check_err(kRecSettingSetString(SID, setting, setting_value), 'kRecSettingSetString');
+            CSDK.check_err(kRecSettingSetString(self.sid, setting, setting_value), 'kRecSettingSetString');
         else:
             raise Exception('OmniPage: unsupported setting value type: {}'.format(setting_value))
 
@@ -69,7 +78,7 @@ cdef class CSDK:
         if hasSetting == 0:
             raise Exception('OmniPage: unknown setting')
         cdef int setting_value
-        CSDK.check_err(kRecSettingGetInt(SID, setting, &setting_value), 'kRecSettingGetInt');
+        CSDK.check_err(kRecSettingGetInt(self.sid, setting, &setting_value), 'kRecSettingGetInt');
         return setting_value
 
     def get_setting_string(self, setting_name):
@@ -79,7 +88,7 @@ cdef class CSDK:
         if hasSetting == 0:
             raise Exception('OmniPage: unknown setting')
         cdef const WCHAR* setting_value
-        CSDK.check_err(kRecSettingGetUString(SID, setting, &setting_value), 'kRecSettingGetUString');
+        CSDK.check_err(kRecSettingGetUString(self.sid, setting, &setting_value), 'kRecSettingGetUString');
         length = 0
         while setting_value[length] != 0:
             length += 1
@@ -87,11 +96,11 @@ cdef class CSDK:
         return <object> o
 
     def set_rm_tradeoff(self, tradeoff):
-        CSDK.check_err(kRecSetRMTradeoff(SID, tradeoff), 'kRecSetRMTradeoff')
+        CSDK.check_err(kRecSetRMTradeoff(self.sid, tradeoff), 'kRecSetRMTradeoff')
 
     def set_single_language_detection(self, flag):
         cdef INTBOOL setting = 1 if flag == True else 0       
-        CSDK.check_err(kRecSetSingleLanguageDetection(SID, setting), 'kRecSetSingleLanguageDetection')
+        CSDK.check_err(kRecSetSingleLanguageDetection(self.sid, setting), 'kRecSetSingleLanguageDetection')
         
     def open_file(self, file_path):
         return File(self, file_path)
@@ -105,13 +114,19 @@ cdef class File:
 
     def __cinit__(self, CSDK sdk, file_path):
         self.sdk = sdk
+        self.handle = NULL
         CSDK.check_err(kRecOpenImgFile(file_path, &self.handle, 0, FF_TIFNO), 'kRecOpenImgFile')
         cdef int n
         CSDK.check_err(kRecGetImgFilePageCount(self.handle, &n), 'kRecGetImgFilePageCount')
         self.nb_pages = n
 
+    def close(self):
+        if self.handle != NULL:
+            CSDK.check_err(kRecCloseImgFile(self.handle), 'kRecCloseImgFile')
+        self.handle = NULL
+
     def __dealloc__(self):
-        CSDK.check_err(kRecCloseImgFile(self.handle), 'kRecCloseImgFile')
+        self.close()
 
     def __enter__(self):
         return self
@@ -121,10 +136,9 @@ cdef class File:
         
     def open_page(self, page_id):
         return Page(self, page_id)
-
+        
 
 class Letter:
-
     def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, choices, lang, confidence,
                  italic, bold, end_word, end_line, end_cell, end_row, in_cell):
         self.top = top
@@ -216,11 +230,17 @@ cdef class Page:
     def __cinit__(self, File file, page_id):
         self.sdk = file.sdk
         self.page_id = page_id
-        CSDK.check_err(kRecLoadImg(SID, file.handle, &self.handle, page_id), 'kRecLoadImg')
+        self.handle = NULL
+        CSDK.check_err(kRecLoadImg(self.sdk.sid, file.handle, &self.handle, page_id), 'kRecLoadImg')
+
+    def close(self):
+        if self.handle != NULL:
+            # free image and recognition data
+            CSDK.check_err(kRecFreeImg(self.handle), 'kRecFreeImg')
+        self.handle = NULL
 
     def __dealloc__(self):
-        # free image and recognition data
-        CSDK.check_err(kRecFreeImg(self.handle), 'kRecFreeImg')
+        self.close()
 
     def __enter__(self):
         return self
@@ -230,20 +250,20 @@ cdef class Page:
         
     def process(self):
         # preprocess image and perform recognition
-        CSDK.check_err(kRecPreprocessImg(SID, self.handle), 'kRecPreprocessImg')
-        CSDK.check_err(kRecRecognize(SID, self.handle, NULL), 'kRecRecognize')
+        CSDK.check_err(kRecPreprocessImg(self.sdk.sid, self.handle), 'kRecPreprocessImg')
+        CSDK.check_err(kRecRecognize(self.sdk.sid, self.handle, NULL), 'kRecRecognize')
         
         # retrieve image
         cdef IMG_INFO img_info
         cdef LPBYTE bitmap
-        CSDK.check_err(kRecGetImgArea(SID, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap), 'kRecGetImgArea')
+        CSDK.check_err(kRecGetImgArea(self.sdk.sid, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap), 'kRecGetImgArea')
         cdef PyObject* o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
         bytes = <object> o
         CSDK.check_err(kRecFree(bitmap), 'kRecFree')
         size = (img_info.Size.cx, img_info.Size.cy)
         cdef BYTE[768] palette
         if img_info.IsPalette == 1:
-            CSDK.check_err(kRecGetImgPalette(SID, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
+            CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
         if img_info.BitsPerPixel == 1:
             self.image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
         elif img_info.BitsPerPixel == 8:
