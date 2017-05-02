@@ -20,6 +20,7 @@ nb_csdk_instances = 0
 
 cdef class CSDK:
     cdef int sid
+    cdef int initialized
     
     @staticmethod
     def check_err(rc, api_function):
@@ -28,11 +29,14 @@ cdef class CSDK:
 
     def __cinit__(self,  company_name, product_name):
         global nb_csdk_instances
+        self.sid = -1
+        self.initialized = 0
         with csdk_lock:
             if nb_csdk_instances == 0:
                 CSDK.check_err(RecInitPlus(company_name, product_name), 'RecInitPlus')
             nb_csdk_instances += 1
-            
+        self.initialized = 1
+
         # create a settings collection for this CSDK instance
         self.sid = kRecCreateSettingsCollection(-1)
         
@@ -46,11 +50,13 @@ cdef class CSDK:
 
     def __dealloc__(self):
         global nb_csdk_instances
-        CSDK.check_err(kRecDeleteSettingsCollection(self.sid), 'kRecDeleteSettingsCollection')
-        with csdk_lock:
-            nb_csdk_instances -= 1
-            if nb_csdk_instances == 0:
-                CSDK.check_err(RecQuitPlus(), 'RecQuitPlus')
+        if self.sid != -1:
+            CSDK.check_err(kRecDeleteSettingsCollection(self.sid), 'kRecDeleteSettingsCollection')
+        if self.initialized != 0:
+            with csdk_lock:
+                nb_csdk_instances -= 1
+                if nb_csdk_instances == 0:
+                    CSDK.check_err(RecQuitPlus(), 'RecQuitPlus')
 
     def __enter__(self):
         return self
