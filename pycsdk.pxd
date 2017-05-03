@@ -896,7 +896,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetImgDespeckleMode(int sid, LPINTBOOL lpbMode)
     RECERR kRecSetImgConvMode(int sid, IMG_CONVERSION Conversion)
     RECERR kRecGetImgConvMode(int sid, IMG_CONVERSION *pConversion)
-    RECERR kRecPreprocessImg(int sid, HPAGE hPage)
+    RECERR kRecPreprocessImg(int sid, HPAGE hPage) nogil
     RECERR kRecGetPreprocessInfo(HPAGE hPage, PREPROC_INFO *pPreprocInfo)
     RECERR kRecRemovePunchHoles(int sid, HPAGE hPage, LPCRECT ROIs, int nROIs, LPRECT *Holes, int *nHoles, UINT flags, UINT minDiameter, UINT maxDiameter)
     RECERR kRecRemoveBorders(int sid, HPAGE hPage, UINT maxWidth)
@@ -908,7 +908,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecDetectFillingMethod(int sid, HPAGE hPage, FILLINGMETHOD *pocrType)
     RECERR kRecDetectImgSkew(int sid, HPAGE hPage, int *pSlope, IMG_ROTATE *pImgRotate)
     RECERR kRecPutImgArea(int sid, LPCIMG_INFO lpImg, const BYTE *lpBitmap, HPAGE hPage, int xDst, int yDst, LPCSIZE pDstSize)
-    RECERR kRecGetImgArea(int sid, HPAGE hPageIn, IMAGEINDEX iiImg, LPCRECT pSrcRect, LPCSIZE pDstSize, LPIMG_INFO pImg, BYTE **ppBitmap)
+    RECERR kRecGetImgArea(int sid, HPAGE hPageIn, IMAGEINDEX iiImg, LPCRECT pSrcRect, LPCSIZE pDstSize, LPIMG_INFO pImg, BYTE **ppBitmap) nogil
     RECERR kRecGetImgAreaEx(int sid, HPAGE hPageIn, IMAGEINDEX iiImg, LPCRECT pSrcRect, LPCSIZE pDstSize, IMG_STRETCHMODE StretchMode, IMG_LINEORDER LineOrder, IMG_RGBORDER RGBOrder, INTBOOL strict, IMG_PADDING Padding, LPIMG_INFO pImg, BYTE **ppBitmap)
     RECERR kRecStartReadImg(int sid, HPAGE hPage, IMAGEINDEX iiImg, LPCRECT pRect, IMG_ROTATE ImgRotation, LPWORD pBytes)
     RECERR kRecReadImg(int sid, LPBYTE pBuff)
@@ -1131,7 +1131,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetDefaultRecognitionModule(int sid, RECOGNITIONMODULE *rm)
     RECERR kRecSetTrainingFileName(int sid, LPCTSTR pFileName)
     RECERR kRecGetTrainingFileName(int sid, LPTSTR pFileName, size_t iSize)
-    RECERR kRecRecognize(int sid, HPAGE hPage, LPCTSTR pFilename)
+    RECERR kRecRecognize(int sid, HPAGE hPage, LPCTSTR pFilename) nogil
     RECERR kRecProcessPages(int sid, LPCTSTR pDocFile, LPCTSTR *pImageFiles, LPONETOUCH_CB pCallback, void *pContext, LPCTSTR pTemplate)
     RECERR kRecProcessPagesEx(int sid, LPCTSTR pDocFile, LPCTSTR *pImageFiles, LPONETOUCH_CB pCallback, void *pContext, LPCTSTR pTemplate)
     RECERR kRecGetRPPErrorList(RPPERRORS **rppErrs)

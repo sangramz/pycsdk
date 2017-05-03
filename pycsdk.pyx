@@ -256,13 +256,20 @@ cdef class Page:
         
     def process(self):
         # preprocess image and perform recognition
-        CSDK.check_err(kRecPreprocessImg(self.sdk.sid, self.handle), 'kRecPreprocessImg')
-        CSDK.check_err(kRecRecognize(self.sdk.sid, self.handle, NULL), 'kRecRecognize')
+        cdef RECERR rc
+        with nogil:
+            rc = kRecPreprocessImg(self.sdk.sid, self.handle)
+        CSDK.check_err(rc, 'kRecPreprocessImg')
+        with nogil:
+            rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
+        CSDK.check_err(rc, 'kRecRecognize')
         
         # retrieve image
         cdef IMG_INFO img_info
         cdef LPBYTE bitmap
-        CSDK.check_err(kRecGetImgArea(self.sdk.sid, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap), 'kRecGetImgArea')
+        with nogil:
+            rc = kRecGetImgArea(self.sdk.sid, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap)
+        CSDK.check_err(rc, 'kRecGetImgArea')
         cdef PyObject* o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
         bytes = <object> o
         CSDK.check_err(kRecFree(bitmap), 'kRecFree')
