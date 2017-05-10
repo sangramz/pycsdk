@@ -24,7 +24,8 @@ cdef class CSDK:
     
     @staticmethod
     def check_err(rc, api_function):
-        if rc != 0:
+        # some errors are warnings (NO_TXT_WARN and ZONE_NOTFOUND_WARN) and are not reported
+        if rc != 0 and rc != 0x0004C902 and rc != 0x0004C905:
             raise Exception('OmniPage: {} error: {:08x}'.format(api_function, rc))
 
     def __cinit__(self,  company_name, product_name):
