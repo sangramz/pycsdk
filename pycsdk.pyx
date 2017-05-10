@@ -280,11 +280,13 @@ cdef class Page:
             CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
         if img_info.BitsPerPixel == 1:
             self.image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
-        elif img_info.BitsPerPixel == 8:
-            # TODO use palette
-            self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', 0, 1)
+        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
+            self.image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
+        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
+            # TODO use palette            
+            self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
         elif img_info.BitsPerPixel == 24:
-            self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', 0, 1)
+            self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
         else:
             raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
 
