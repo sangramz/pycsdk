@@ -122,14 +122,23 @@ cdef class File:
     def __cinit__(self, CSDK sdk, file_path):
         self.sdk = sdk
         self.handle = NULL
-        CSDK.check_err(kRecOpenImgFile(file_path, &self.handle, 0, FF_TIFNO), 'kRecOpenImgFile')
+        cdef RECERR rc
+        cdef LPCTSTR pFilePath = file_path
+        with nogil:
+            rc = kRecOpenImgFile(pFilePath, &self.handle, 0, FF_TIFNO)
+        CSDK.check_err(rc, 'kRecOpenImgFile')
         cdef int n
-        CSDK.check_err(kRecGetImgFilePageCount(self.handle, &n), 'kRecGetImgFilePageCount')
+        with nogil:
+            rc = kRecGetImgFilePageCount(self.handle, &n)
+        CSDK.check_err(rc, 'kRecGetImgFilePageCount')
         self.nb_pages = n
 
     def close(self):
+        cdef RECERR rc
         if self.handle != NULL:
-            CSDK.check_err(kRecCloseImgFile(self.handle), 'kRecCloseImgFile')
+            with nogil:
+                rc = kRecCloseImgFile(self.handle)
+            CSDK.check_err(rc, 'kRecCloseImgFile')
         self.handle = NULL
 
     def __dealloc__(self):
@@ -373,12 +382,19 @@ cdef class Page:
         self.sdk = file.sdk
         self.page_id = page_id
         self.handle = NULL
-        CSDK.check_err(kRecLoadImg(self.sdk.sid, file.handle, &self.handle, page_id), 'kRecLoadImg')
+        cdef RECERR rc
+        cdef int iPage = page_id
+        with nogil:
+            rc = kRecLoadImg(self.sdk.sid, file.handle, &self.handle, iPage)
+        CSDK.check_err(rc, 'kRecLoadImg')
 
     def close(self):
+        cdef RECERR rc
         if self.handle != NULL:
             # free image and recognition data
-            CSDK.check_err(kRecFreeImg(self.handle), 'kRecFreeImg')
+            with nogil:
+                rc = kRecFreeImg(self.handle)
+            CSDK.check_err(rc, 'kRecFreeImg')
         self.handle = NULL
 
     def __dealloc__(self):
@@ -408,7 +424,9 @@ cdef class Page:
         CSDK.check_err(rc, 'kRecGetImgArea')
         cdef PyObject* o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
         bytes = <object> o
-        CSDK.check_err(kRecFree(bitmap), 'kRecFree')
+        with nogil:
+            rc = kRecFree(bitmap)
+        CSDK.check_err(rc, 'kRecFree')
         size = (img_info.Size.cx, img_info.Size.cy)
         cdef BYTE[768] palette
         if img_info.IsPalette == 1:
@@ -427,22 +445,30 @@ cdef class Page:
 
         # retrieve OCR zones
         cdef int nb_zones
-        CSDK.check_err(kRecGetOCRZoneCount(self.handle, &nb_zones), 'kRecGetOCRZoneCount')
+        with nogil:
+            rc = kRecGetOCRZoneCount(self.handle, &nb_zones)
+        CSDK.check_err(rc, 'kRecGetOCRZoneCount')
         self.zones = []
         cdef ZONE zone
         for zone_id in range(nb_zones):
-            CSDK.check_err(kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id), 'kRecGetOCRZoneInfo')
+            with nogil:
+                rc = kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id)
+            CSDK.check_err(rc, 'kRecGetOCRZoneInfo')
             self.zones.append(build_zone(zone))
 
         # retrieve letter choices
         cdef LPWCH pChoices
         cdef LONG nbChoices
-        CSDK.check_err(kRecGetChoiceStr(self.handle, &pChoices, &nbChoices), 'kRecGetChoiceStr')
+        with nogil:
+            rc = kRecGetChoiceStr(self.handle, &pChoices, &nbChoices)
+        CSDK.check_err(rc, 'kRecGetChoiceStr')
 
         # retrieve letters
         cdef LPLETTER pLetters
         cdef LONG nb_letters
-        CSDK.check_err(kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters), 'kRecGetLetters')
+        with nogil:
+            rc = kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters)
+        CSDK.check_err(rc, 'kRecGetLetters')
         self.letters = []
         for letter_id in range(nb_letters):
             letter = build_letter(pLetters[letter_id], pChoices, img_info.DPI.cy)
@@ -450,6 +476,10 @@ cdef class Page:
                 self.letters.append(letter)
                 
         # cleanup
-        CSDK.check_err(kRecFree(pLetters), 'kRecFree')
-        CSDK.check_err(kRecFree(pChoices), 'kRecFree')
+        with nogil:
+            rc = kRecFree(pLetters)
+        CSDK.check_err(rc, 'kRecFree')
+        with nogil:
+            rc = kRecFree(pChoices)
+        CSDK.check_err(rc, 'kRecFree')
         
