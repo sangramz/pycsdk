@@ -337,7 +337,7 @@ cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
     end_row = True if letter.makeup & 0x0040 else False
     in_cell = True if letter.makeup & 0x0080 else False
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
-                  letter.cellNum, letter.zone, code, choices, switcher.get(letter.lang, 'UNKNOWN_'.format(letter.lang)), confidence,
+                  letter.cellNum, letter.zone, code, choices, switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang)), confidence,
                   italic, bold, end_word, end_line, end_cell, end_row, in_cell)
 
 
@@ -369,6 +369,21 @@ cdef build_zone(ZONE zone):
                 switcher.get(zone.type, 'UNKNOWN_'.format(zone.type)))
 
 
+cdef build_rotation(IMG_ROTATE img_rotate):
+    switcher = {
+        ROT_AUTO: "ROT_AUTO",
+        ROT_NO: "ROT_NO",
+        ROT_RIGHT: "ROT_RIGHT",
+        ROT_DOWN: "ROT_DOWN",
+        ROT_LEFT: "ROT_LEFT",
+        ROT_FLIPPED: "ROT_FLIPPED",
+        ROT_RIGHT_FLIPPED: "ROT_RIGHT_FLIPPED",
+        ROT_DOWN_FLIPPED: "ROT_DOWN_FLIPPED",
+        ROT_LEFT_FLIPPED: "ROT_LEFT_FLIPPED"
+    }
+    return switcher.get(img_rotate, 'UNKNOWN_{}'.format(img_rotate))
+
+
 cdef class Page:
     cdef CSDK sdk
     cdef HPAGE handle
@@ -378,6 +393,7 @@ cdef class Page:
         object letters
         object image
         object image_dpi
+        object image_rotation
 
     def __cinit__(self, File file, page_id):
         self.sdk = file.sdk
@@ -413,6 +429,11 @@ cdef class Page:
         with nogil:
             rc = kRecPreprocessImg(self.sdk.sid, self.handle)
         CSDK.check_err(rc, 'kRecPreprocessImg')
+        cdef PREPROC_INFO preproc_info;
+        with nogil:
+            rc = kRecGetPreprocessInfo(self.handle, &preproc_info)
+        CSDK.check_err(rc, 'kRecGetPreprocessInfo')
+        self.image_rotation = build_rotation(preproc_info.Rotation)        
         with nogil:
             rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
         CSDK.check_err(rc, 'kRecRecognize')

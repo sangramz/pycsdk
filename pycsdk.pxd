@@ -897,7 +897,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecSetImgConvMode(int sid, IMG_CONVERSION Conversion)
     RECERR kRecGetImgConvMode(int sid, IMG_CONVERSION *pConversion)
     RECERR kRecPreprocessImg(int sid, HPAGE hPage) nogil
-    RECERR kRecGetPreprocessInfo(HPAGE hPage, PREPROC_INFO *pPreprocInfo)
+    RECERR kRecGetPreprocessInfo(HPAGE hPage, PREPROC_INFO *pPreprocInfo) nogil
     RECERR kRecRemovePunchHoles(int sid, HPAGE hPage, LPCRECT ROIs, int nROIs, LPRECT *Holes, int *nHoles, UINT flags, UINT minDiameter, UINT maxDiameter)
     RECERR kRecRemoveBorders(int sid, HPAGE hPage, UINT maxWidth)
     RECERR kRecDetectBook(int sid, HPAGE hPage, CUT_INFO *pInfo)
