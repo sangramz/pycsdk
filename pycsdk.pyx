@@ -377,6 +377,7 @@ cdef class Page:
         object zones
         object letters
         object image
+        object image_dpi
 
     def __cinit__(self, File file, page_id):
         self.sdk = file.sdk
@@ -442,6 +443,7 @@ cdef class Page:
             self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
         else:
             raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
+        self.image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
 
         # retrieve OCR zones
         cdef int nb_zones
