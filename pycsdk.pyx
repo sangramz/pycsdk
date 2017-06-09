@@ -458,8 +458,10 @@ cdef class Page:
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
             self.image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
-            # TODO use palette            
             self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
+            o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
+            palette_bytes = <object> o
+            self.image.putpalette(palette_bytes)
         elif img_info.BitsPerPixel == 24:
             self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
         else:
