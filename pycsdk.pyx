@@ -28,12 +28,14 @@ cdef class CSDK:
         if rc != 0 and rc != 0x0004C902 and rc != 0x0004C905:
             raise Exception('OmniPage: {} error: {:08x}'.format(api_function, rc))
 
-    def __cinit__(self,  company_name, product_name):
+    def __cinit__(self,  company_name, product_name, license_file=None, code=None):
         global nb_csdk_instances
         self.sid = -1
         self.initialized = 0
         with csdk_lock:
             if nb_csdk_instances == 0:
+                if license_file is not None and code is not None:
+                    CSDK.check_err(kRecSetLicense(license_file, code), 'kRecSetLicense')
                 CSDK.check_err(RecInitPlus(company_name, product_name), 'RecInitPlus')
             nb_csdk_instances += 1
         self.initialized = 1
