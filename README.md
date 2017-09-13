@@ -41,7 +41,7 @@ with csdk.open_file('myfile.pdf') as f:
             p.process() 
             print('found {} zones, {} letters'.format(len(p.zones), len(p.letters)))
             
-            # do something interesting with zones and letters
+            # do something interesting with zones (and cells in zones) and letters
             print(p.zones)
             print(p.letters)
             
