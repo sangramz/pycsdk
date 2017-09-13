@@ -342,20 +342,8 @@ cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
                   letter.cellNum, letter.zone, code, choices, switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang)), confidence,
                   italic, bold, end_word, end_line, end_cell, end_row, in_cell)
 
-
-class Zone:
-    def __init__(self, top, left, bottom, right, type):
-        self.top = top
-        self.left = left
-        self.bottom = bottom
-        self.right = right
-        self.type = type
-
-    def __repr__(self):
-        return pformat(vars(self))
-
-
-cdef build_zone(ZONE zone):
+                  
+cdef zone_type(ZONETYPE type):
     switcher = {
         WT_FLOW: "WT_FLOW",
         WT_TABLE: "WT_TABLE",
@@ -367,8 +355,70 @@ cdef build_zone(ZONE zone):
         WT_LEFTTEXT: "WT_LEFTTEXT",
         WT_RIGHTTEXT: "WT_RIGHTTEXT"
     }
+    return switcher.get(type, 'UNKNOWN_'.format(type))
+
+
+cdef line_style(RLSTYLE style):
+    switcher = {
+        LS_NO: "LS_NO",
+        LS_SOLID: "LS_SOLID",
+        LS_DOUBLE: "LS_DOUBLE",
+        LS_DASHED: "LS_DASHED",
+        LS_DOTTED: "LS_DOTTED",
+        LS_OTHER: "LS_OTHER"
+    }
+    return switcher.get(style, 'UNKNOWN_'.format(style))
+
+
+class Cell:
+    def __init__(self, top, left, bottom, right, type, cell_color, l_color, t_color, r_color, b_color,
+                 l_style, t_style, r_style, b_style, l_width, t_width, r_width, b_width):
+        self.top = top
+        self.left = left
+        self.bottom = bottom
+        self.right = right
+        self.type = type
+        self.cell_color = cell_color
+        self.l_color = l_color
+        self.t_color = t_color
+        self.r_color = r_color
+        self.b_color = b_color
+        self.l_style = l_style
+        self.t_style = t_style
+        self.r_style = r_style
+        self.b_style = b_style
+        self.l_width = l_width
+        self.t_width = t_width
+        self.r_width = r_width
+        self.b_width = b_width
+
+    def __repr__(self):
+        return pformat(vars(self))
+
+
+cdef build_cell(CELL_INFO cell):
+    return Cell(cell.rect.top, cell.rect.left, cell.rect.bottom, cell.rect.right,
+                zone_type(cell.type), cell.cellcolor, cell.lcolor, cell.tcolor, cell.rcolor, cell.bcolor, 
+                line_style(cell.lstyle), line_style(cell.tstyle), line_style(cell.rstyle), line_style(cell.bstyle),
+                cell.lwidth, cell.twidth, cell.rwidth, cell.bwidth)
+
+
+class Zone:
+    def __init__(self, top, left, bottom, right, type, cells):
+        self.top = top
+        self.left = left
+        self.bottom = bottom
+        self.right = right
+        self.type = type
+        self.cells = cells
+
+    def __repr__(self):
+        return pformat(vars(self))
+
+
+cdef build_zone(ZONE zone, cells):
     return Zone(zone.rectBBox.top, zone.rectBBox.left, zone.rectBBox.bottom, zone.rectBBox.right,
-                switcher.get(zone.type, 'UNKNOWN_'.format(zone.type)))
+                zone_type(zone.type), cells)
 
 
 cdef build_rotation(IMG_ROTATE img_rotate):
@@ -472,16 +522,30 @@ cdef class Page:
 
         # retrieve OCR zones
         cdef int nb_zones
+        cdef int nb_cells
         with nogil:
-            rc = kRecGetOCRZoneCount(self.handle, &nb_zones)
-        CSDK.check_err(rc, 'kRecGetOCRZoneCount')
+            rc = kRecCopyOCRZones(self.handle)
+        CSDK.check_err(rc, 'kRecCopyOCRZones')
+        with nogil:
+            rc = kRecGetZoneCount(self.handle, &nb_zones)
+        CSDK.check_err(rc, 'kRecGetZoneCount')
         self.zones = []
         cdef ZONE zone
+        cdef CELL_INFO cell
         for zone_id in range(nb_zones):
             with nogil:
-                rc = kRecGetOCRZoneInfo(self.handle, II_CURRENT, &zone, zone_id)
-            CSDK.check_err(rc, 'kRecGetOCRZoneInfo')
-            self.zones.append(build_zone(zone))
+                rc = kRecGetZoneInfo(self.handle, II_CURRENT, &zone, zone_id)
+            CSDK.check_err(rc, 'kRecGetZoneInfo')
+            cells = []
+            with nogil:
+                rc = kRecGetCellCount(self.handle, zone_id, &nb_cells)
+            CSDK.check_err(rc, 'kRecGetCellCount')
+            for cell_id in range(nb_cells):
+                with nogil:
+                    rc = kRecGetCellInfo(self.handle, II_CURRENT, zone_id, cell_id, &cell)
+                CSDK.check_err(rc, 'kRecGetCellInfo')
+                cells.append(build_cell(cell))
+            self.zones.append(build_zone(zone, cells))
 
         # retrieve letter choices
         cdef LPWCH pChoices

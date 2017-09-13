@@ -965,8 +965,8 @@ cdef extern from "KernelApi.h":
     # --------------------
     RECERR kRecLocateTable(int sid, HPAGE hPage, int zone, INTBOOL bForce)
     RECERR kRecCreateTableInfo(HPAGE hPage, int xZone)
-    RECERR kRecGetCellCount(HPAGE hPage, int xZone, int *pnCells)
-    RECERR kRecGetCellInfo(HPAGE hPage, IMAGEINDEX iiImg, int xZone, int CellIndex, LPCELL_INFO pCellInfo)
+    RECERR kRecGetCellCount(HPAGE hPage, int xZone, int *pnCells) nogil
+    RECERR kRecGetCellInfo(HPAGE hPage, IMAGEINDEX iiImg, int xZone, int CellIndex, LPCELL_INFO pCellInfo) nogil
     RECERR kRecSplitCells(HPAGE hPage, IMAGEINDEX iiImg, int xZone, INTBOOL bVertical, const RECT *pRect, POINT Position, int LineWidth, int LineStyle, REC_COLOR lineColor)
     RECERR kRecMergeCells(HPAGE hPage, IMAGEINDEX iiImg, int xZone, const RECT *pRect)
     RECERR kRecGetPointInfoFromTable(HPAGE hPage, IMAGEINDEX iiImg, int xZone, POINT Point, int xDist, int yDist, int *pCellIndex, BORDERINDEX *pBorderIndex)
@@ -1002,8 +1002,8 @@ cdef extern from "KernelApi.h":
     RECERR kRecLocateZones(int sid, HPAGE hPage)
     RECERR kRecSetPageDescription(int sid, DWORD PageDesc)
     RECERR kRecGetPageDescription(int sid, DWORD *pPageDesc)
-    RECERR kRecGetZoneCount(HPAGE hPage, int *pnZones)
-    RECERR kRecGetZoneInfo(HPAGE hPage, IMAGEINDEX iiImg, LPZONE pZone, int nZone)
+    RECERR kRecGetZoneCount(HPAGE hPage, int *pnZones) nogil
+    RECERR kRecGetZoneInfo(HPAGE hPage, IMAGEINDEX iiImg, LPZONE pZone, int nZone) nogil
     RECERR kRecGetZoneLayout(HPAGE hPage, IMAGEINDEX iiImg, LPRECT *ppRects, int *pnRects, int iZone)
     RECERR kRecGetZoneNodeArray(HPAGE hPage, IMAGEINDEX iiImg, LPPOINT *ppPoints, int *pnNodes, int iZone)
     RECERR kRecDeleteAllZones(HPAGE hPage)
@@ -1012,7 +1012,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecInsertZone(HPAGE hPage, IMAGEINDEX iiImg, LPCZONE pZone, int nZone)
     RECERR kRecAddZoneRect(HPAGE hPage, IMAGEINDEX iiImg, const RECT *pRect, int nZone)
     RECERR kRecSubZoneRect(HPAGE hPage, IMAGEINDEX iiImg, const RECT *pRect, int nZone)
-    RECERR kRecCopyOCRZones(HPAGE hPage)
+    RECERR kRecCopyOCRZones(HPAGE hPage) nogil
     RECERR kRecLoadZones(HPAGE hPage, LPCTSTR pFileName)
     RECERR kRecSaveZones(HPAGE hPage, LPCTSTR pFileName)
     RECERR kRecUpdateZone(HPAGE hPage, IMAGEINDEX iiImg, LPCZONE pZone, int nZone)
