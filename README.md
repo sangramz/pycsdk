@@ -27,7 +27,7 @@ import os
 from pycsdk import *
 from PIL import Image
     
-csdk = CSDK('my_company', 'my_product')
+csdk = CSDK('my_company', 'my_product', license_file='/path/to/license_file', code='license_code')
 csdk.set_rm_tradeoff(TO_ACCURATE)
 csdk.set_setting('Kernel.OcrMgr.PDF.TradeOff', TO_ACCURATE)
 csdk.set_setting('Kernel.OcrMgr.PDF.ProcessingMode', PDF_PM_AUTO)
