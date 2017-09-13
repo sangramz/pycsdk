@@ -37,7 +37,8 @@ csdk.set_single_language_detection(True)
 with csdk.open_file('myfile.pdf') as f:
     for page_id in range(f.nb_pages):
         with f.open_page(page_id) as p:
-            # note pages can be processed by different threads
+            # note each page can be handled by a child process with os.fork()
+            # (the CSDK does not support multithreading)
             p.process() 
             print('found {} zones, {} letters'.format(len(p.zones), len(p.letters)))
             
