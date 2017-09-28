@@ -1,6 +1,7 @@
 # cython: c_string_type=str, c_string_encoding=ascii
 
 import os
+import logging
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdlib cimport malloc, free
 from cpython.ref cimport PyObject
@@ -22,11 +23,31 @@ cdef class CSDK:
     cdef int sid
     cdef int initialized
     
+    
     @staticmethod
     def check_err(rc, api_function):
-        # some errors are warnings (NO_TXT_WARN and ZONE_NOTFOUND_WARN) and are not reported
-        if rc != 0 and rc != 0x0004C902 and rc != 0x0004C905:
-            raise Exception('OmniPage: {} error: {:08x}'.format(api_function, rc))
+        # log warning, raise exception for error
+        cdef RETCODEINFO err_info
+        cdef LPCSTR err_sym
+        if rc != 0:
+            switcher = {
+                RET_OK: "RET_OK",
+                RET_WARNING: "RET_WARNING",
+                RET_MEMORY_ERROR: "RET_MEMORY_ERROR",
+                RET_FILE_ERROR: "RET_FILE_ERROR",
+                RET_SCANNER_ERROR: "RET_SCANNER_ERROR",
+                RET_IMAGE_ERROR: "RET_IMAGE_ERROR",
+                RET_OCR_ERROR: "RET_OCR_ERROR",
+                RET_TEXT_ERROR: "RET_TEXT_ERROR",
+                RET_OTHER_ERROR: "RET_OTHER_ERROR",
+                RET_UNKNOWN: "RET_UNKNOWN"
+            }
+            err_info = kRecGetErrorInfo(rc, &err_sym)
+            if err_info == RET_WARNING:
+                logging.warning('OmniPage: {} returned warning {:08x}: {}'.format(api_function, rc, err_sym))
+            else:
+                error_kind = switcher.get(err_info, 'UNKNOWN_{}'.format(err_info))
+                raise Exception('OmniPage: {} returned error {:08x}: {} ({})'.format(api_function, rc, err_sym, error_kind))
 
     def __cinit__(self,  company_name, product_name, license_file=None, code=None):
         global nb_csdk_instances
