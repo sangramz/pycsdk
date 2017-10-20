@@ -1,13 +1,12 @@
 # cython: c_string_type=str, c_string_encoding=ascii
 
 import os
-import logging
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdlib cimport malloc, free
 from cpython.ref cimport PyObject
 from PIL import Image
 from pprint import pformat
-from threading import RLock
+from threading import RLock, local
 
 
 cdef extern from "Python.h":
@@ -17,7 +16,7 @@ cdef extern from "Python.h":
 
 csdk_lock = RLock()
 nb_csdk_instances = 0
-
+local_data = local()
 
 cdef class CSDK:
     cdef int sid
@@ -44,10 +43,20 @@ cdef class CSDK:
             }
             err_info = kRecGetErrorInfo(rc, &err_sym)
             if err_info == RET_WARNING:
-                logging.warning('OmniPage: {} returned warning {:08x}: {}'.format(api_function, rc, err_sym))
+                if not hasattr(local_data, 'warnings'):
+                    local_data.warnings = []
+                local_data.warnings.append('OmniPage: {} returned warning {:08x}: {}'.format(api_function, rc, err_sym))
             else:
                 error_kind = switcher.get(err_info, 'UNKNOWN_{}'.format(err_info))
                 raise Exception('OmniPage: {} returned error {:08x}: {} ({})'.format(api_function, rc, err_sym, error_kind))
+                
+    @staticmethod
+    def warnings():
+        result = []
+        if hasattr(local_data, 'warnings'):
+            result = local_data.warnings
+            del local_data.warnings
+        return result
 
     def __cinit__(self,  company_name, product_name, license_file=None, code=None):
         global nb_csdk_instances
