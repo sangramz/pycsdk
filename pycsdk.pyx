@@ -188,7 +188,7 @@ cdef class File:
 
 class Letter:
     def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, choices, lang, confidence,
-                 italic, bold, end_word, end_line, end_cell, end_row, in_cell):
+                 italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl):
         self.top = top
         self.left = left
         self.bottom = bottom
@@ -207,6 +207,8 @@ class Letter:
         self.end_cell = end_cell
         self.end_row = end_row
         self.in_cell = in_cell
+        self.orientation = orientation
+        self.rtl = rtl
             
     def __repr__(self):
         return pformat(vars(self))
@@ -368,9 +370,17 @@ cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
     end_cell = True if letter.makeup & 0x0020 else False
     end_row = True if letter.makeup & 0x0040 else False
     in_cell = True if letter.makeup & 0x0080 else False
+    orientation = 'R_NORMTEXT'
+    if letter.makeup & 0x0300 == 0x0300:
+        orientation = 'R_RIGHTTEXT'
+    elif letter.makeup & 0x0100 == 0x0100:
+        orientation = 'R_VERTTEXT'
+    elif letter.makeup & 0x0200 == 0x0200:
+        orientation = 'R_LEFTTEXT'
+    rtl = True if letter.makeup & 0x0400 else False
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
                   letter.cellNum, letter.zone, code, choices, switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang)), confidence,
-                  italic, bold, end_word, end_line, end_cell, end_row, in_cell)
+                  italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl)
 
                   
 cdef zone_type(ZONETYPE type):
