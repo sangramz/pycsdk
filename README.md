@@ -34,11 +34,11 @@ csdk.set_setting('Kernel.OcrMgr.PDF.ProcessingMode', PDF_PM_AUTO)
 csdk.set_setting('Kernel.OcrMgr.DefaultRecognitionModule', RM_OMNIFONT_PLUS3W)
 csdk.set_single_language_detection(True)
 
+# note each file can be handled by a child process with e.g. os.fork()
+# (the CSDK does not support multithreading)
 with csdk.open_file('myfile.pdf') as f:
     for page_id in range(f.nb_pages):
         with f.open_page(page_id) as p:
-            # note each page can be handled by a child process with os.fork()
-            # (the CSDK does not support multithreading)
             p.process() 
             print('found {} zones, {} letters'.format(len(p.zones), len(p.letters)))
             
