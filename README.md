@@ -9,7 +9,7 @@ First, set `LD_LIBRARY_PATH` to point to the CSDK shared libraries.
 For example:
 
 ```bash
-$ export LD_LIBRARY_PATH=/usr/local/lib/nuance-omnipage-csdk-lib64-20.1:$LD_LIBRARY_PATH
+$ export LD_LIBRARY_PATH=/usr/local/lib/nuance-omnipage-csdk-lib64-20.2:$LD_LIBRARY_PATH
 ```
 
 Next, clone this repo, enter the directory and
