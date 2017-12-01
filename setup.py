@@ -24,8 +24,8 @@ setup(
         Extension("pycsdk",
                   sources=["pycsdk.pyx"],
                   libraries=["kernelapi", "recpdf", "recapiplus"],
-                  extra_compile_args=["-I/usr/local/include/nuance-omnipage-csdk-20.1", "-O2"],
-                  extra_link_args=["-L/usr/local/lib/nuance-omnipage-csdk-lib64-20.1"]
+                  extra_compile_args=["-I/usr/local/include/nuance-omnipage-csdk-20.2", "-O2"],
+                  extra_link_args=["-L/usr/local/lib/nuance-omnipage-csdk-lib64-20.2"]
              )
         ]
 )
