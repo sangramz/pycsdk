@@ -514,9 +514,9 @@ cdef class Page:
 
     def __exit__(self, type, value, traceback):
         pass
-        
-    def process(self):
-        # preprocess image and perform recognition
+
+    def process(self, despeckle_method = None, despeckle_level = None):
+        # preprocess image
         cdef RECERR rc
         with nogil:
             rc = kRecPreprocessImg(self.sdk.sid, self.handle)
@@ -525,11 +525,25 @@ cdef class Page:
         with nogil:
             rc = kRecGetPreprocessInfo(self.handle, &preproc_info)
         CSDK.check_err(rc, 'kRecGetPreprocessInfo')
-        self.image_rotation = build_rotation(preproc_info.Rotation)        
+        self.image_rotation = build_rotation(preproc_info.Rotation)
+
+        # try to force despeckle if required
+        cdef DESPECKLE_METHOD method
+        cdef int level
+        if despeckle_method:
+            method = despeckle_method
+            level = despeckle_level if despeckle_level else 0
+            with nogil:
+                rc = kRecForceDespeckleImg(self.sdk.sid, self.handle, NULL, method, level)
+            # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
+            if rc != 0x8004C708:
+                CSDK.check_err(rc, 'kRecForceDespeckleImg')
+
+        # perform recognition
         with nogil:
             rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
         CSDK.check_err(rc, 'kRecRecognize')
-        
+
         # retrieve image
         cdef IMG_INFO img_info
         cdef LPBYTE bitmap

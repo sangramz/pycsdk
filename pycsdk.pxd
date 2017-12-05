@@ -929,7 +929,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecSetImgPalette(HPAGE hPage, const BYTE *pPal)
     RECERR kRecGetImgPalette(int sid, HPAGE hPage, IMAGEINDEX iiImg, LPBYTE pPal)
     RECERR kRecDespeckleImg(int sid, HPAGE hPage)
-    RECERR kRecForceDespeckleImg(int sid, HPAGE hPage, LPCRECT pRect, DESPECKLE_METHOD method, int level)
+    RECERR kRecForceDespeckleImg(int sid, HPAGE hPage, LPCRECT pRect, DESPECKLE_METHOD method, int level) nogil
     RECERR kRecImgErosion(int sid, HPAGE hPage, ERO_DIL_TYPE type)
     RECERR kRecImgDilatation(int sid, HPAGE hPage, ERO_DIL_TYPE type)
     RECERR kRecConvertImg2BW(int sid, HPAGE hPageIn, IMG_CONVERSION Conversion, int Brightness, int Threshold, IMG_RESENH resolenh, HPAGE *phPageOut)
