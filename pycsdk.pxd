@@ -1143,9 +1143,6 @@ cdef extern from "KernelApi.h":
         WORD spcCount
         BYTE spcType
         BYTE Res
-    ctypedef union LETTER_UNION:
-        DWORD ndxSuggestions
-        LSPC spcInfo
     ctypedef struct LETTER:
         WORD  left
         WORD  top
@@ -1162,7 +1159,7 @@ cdef extern from "KernelApi.h":
         BYTE  cntSuggestions
         DWORD ndxChoices
         DWORD ndxSuggestions
-        #LETTER_UNION un
+        LSPC spcInfo
         WORD  fontAttrib
         WORD  ndxFontFace
         DWORD info
@@ -1180,7 +1177,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetLetters(HPAGE hPage, IMAGEINDEX iiImage, LPLETTER *ppLetter, LPLONG pLettersLength) nogil
     RECERR kRecGetLetterPalette(HPAGE hPage, REC_COLOR **ppColours, LPLONG pNum)
     RECERR kRecGetChoiceStr(HPAGE hPage, WCHAR **ppChoices, LPLONG pLength) nogil
-    RECERR kRecGetSuggestionStr(HPAGE hPage, WCHAR **ppSuggestions, LPLONG pLength)
+    RECERR kRecGetSuggestionStr(HPAGE hPage, WCHAR **ppSuggestions, LPLONG pLength) nogil
     RECERR kRecGetFontFaceStr(HPAGE hPage, char **ppFontFaces, LPLONG pLength)
     RECERR kRecSetLetters(LETTERSTRENGTH towhere, HPAGE hPage, IMAGEINDEX iiImage, LPCLETTER pLetter, LONG LettersLength)
     RECERR kRecFreeRecognitionData(HPAGE hPage)

@@ -187,8 +187,9 @@ cdef class File:
         
 
 class Letter:
-    def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, choices, lang, confidence,
-                 italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl):
+    def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, space_type, nb_spaces,
+                 choices, suggestions, lang, confidence, italic, bold, end_word, end_line, end_cell, end_row, in_cell,
+                 orientation, rtl):
         self.top = top
         self.left = left
         self.bottom = bottom
@@ -197,7 +198,10 @@ class Letter:
         self.cell_num = cell_num
         self.zone_id = zone_id
         self.code = code
+        self.nb_spaces = nb_spaces
+        self.space_type = space_type
         self.choices = choices
+        self.suggestions = suggestions
         self.lang = lang
         self.confidence = confidence
         self.italic = italic
@@ -214,7 +218,7 @@ class Letter:
         return pformat(vars(self))
 
 
-cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
+cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     switcher = {
         LANG_ALL: "LANG_ALL",
         LANG_ALL_LATIN: "LANG_ALL_LATIN",
@@ -350,7 +354,7 @@ cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
         LANG_ARA: "LANG_ARA",
         LANG_HEB: "LANG_HEB"
     }
-    if letter.code == 0x0fffd or letter.width == 0: # UNICODE_REJECTED and dummy space
+    if letter.code == 0x0fffd: # UNICODE_REJECTED
         return None
     cdef WCHAR* pCode = &letter.code
     code = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pCode, 1)
@@ -358,6 +362,27 @@ cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
         choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices, letter.cntChoices - 1)
     else:
         choices = ''
+    if letter.cntSuggestions > 1:
+        suggestions = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pSuggestions + letter.ndxSuggestions, letter.cntSuggestions - 1)
+    else:
+        suggestions = ''
+    nb_spaces = None
+    space_type = None
+    if code == ' ':
+        nb_spaces = letter.spcInfo.spcCount
+        spc_type = letter.spcInfo.spcType
+        if spc_type == 0:
+            space_type = 'SPC_SPACE'
+        elif spc_type == 1:
+            space_type = 'SPC_TAB'
+        elif spc_type == 2:
+            space_type = 'SPC_LEADERDOT'
+        elif spc_type == 3:
+            space_type = 'SPC_LEADERLINE'
+        elif spc_type == 4:
+            space_type = 'SPC_LEADERHYPHEN'
+        else:
+            space_type = 'UNKNOWN_{}'.format(spc_type)
     cdef BYTE err = letter.err
     if err >= 100:
         confidence = 0
@@ -379,7 +404,8 @@ cdef build_letter(LETTER letter, LPWCH pChoices, dpi):
         orientation = 'R_LEFTTEXT'
     rtl = True if letter.makeup & 0x0400 else False
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
-                  letter.cellNum, letter.zone, code, choices, switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang)), confidence,
+                  letter.cellNum, letter.zone, code, space_type, nb_spaces, choices, suggestions,
+                  switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang)), confidence,
                   italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl)
 
                   
@@ -608,6 +634,13 @@ cdef class Page:
             rc = kRecGetChoiceStr(self.handle, &pChoices, &nbChoices)
         CSDK.check_err(rc, 'kRecGetChoiceStr')
 
+        # retrieve letter suggestions
+        cdef LPWCH pSuggestions
+        cdef LONG nbSuggestions
+        with nogil:
+            rc = kRecGetSuggestionStr(self.handle, &pSuggestions, &nbSuggestions)
+        CSDK.check_err(rc, 'kRecGetSuggestionStr')
+
         # retrieve letters
         cdef LPLETTER pLetters
         cdef LONG nb_letters
@@ -616,8 +649,8 @@ cdef class Page:
         CSDK.check_err(rc, 'kRecGetLetters')
         self.letters = []
         for letter_id in range(nb_letters):
-            letter = build_letter(pLetters[letter_id], pChoices, img_info.DPI.cy)
-            if letter is not None:
+            letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, img_info.DPI.cy)
+            if letter:
                 self.letters.append(letter)
                 
         # cleanup
@@ -627,4 +660,7 @@ cdef class Page:
         with nogil:
             rc = kRecFree(pChoices)
         CSDK.check_err(rc, 'kRecFree')
-        
+        with nogil:
+            rc = kRecFree(pSuggestions)
+        CSDK.check_err(rc, 'kRecFree')
+
