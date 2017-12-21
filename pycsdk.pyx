@@ -7,6 +7,8 @@ from cpython.ref cimport PyObject
 from PIL import Image
 from pprint import pformat
 from threading import RLock, local
+from contextlib import contextmanager
+from datetime import datetime
 
 
 cdef extern from "Python.h":
@@ -502,6 +504,16 @@ cdef build_rotation(IMG_ROTATE img_rotate):
     return switcher.get(img_rotate, 'UNKNOWN_{}'.format(img_rotate))
 
 
+@contextmanager
+def _timing(timings, name):
+    started = datetime.now()
+    try:
+        yield
+    finally:
+        duration = datetime.now() - started
+        timings[name] = duration.total_seconds()
+
+
 cdef class Page:
     cdef CSDK sdk
     cdef HPAGE handle
@@ -541,91 +553,97 @@ cdef class Page:
     def __exit__(self, type, value, traceback):
         pass
 
-    def process(self, despeckle_method = None, despeckle_level = None):
+    def process(self, despeckle_method = None, despeckle_level = None, timings = dict()):
         # preprocess image
-        cdef RECERR rc
-        with nogil:
-            rc = kRecPreprocessImg(self.sdk.sid, self.handle)
-        CSDK.check_err(rc, 'kRecPreprocessImg')
         cdef PREPROC_INFO preproc_info;
-        with nogil:
-            rc = kRecGetPreprocessInfo(self.handle, &preproc_info)
-        CSDK.check_err(rc, 'kRecGetPreprocessInfo')
-        self.image_rotation = build_rotation(preproc_info.Rotation)
+        cdef RECERR rc
+        with _timing(timings, 'ocr_preprocess_image'):
+            with nogil:
+                rc = kRecPreprocessImg(self.sdk.sid, self.handle)
+            CSDK.check_err(rc, 'kRecPreprocessImg')
+            with nogil:
+                rc = kRecGetPreprocessInfo(self.handle, &preproc_info)
+            CSDK.check_err(rc, 'kRecGetPreprocessInfo')
+            self.image_rotation = build_rotation(preproc_info.Rotation)
 
         # try to force despeckle if required
         cdef DESPECKLE_METHOD method
         cdef int level
         if despeckle_method:
-            method = despeckle_method
-            level = despeckle_level if despeckle_level else 0
-            with nogil:
-                rc = kRecForceDespeckleImg(self.sdk.sid, self.handle, NULL, method, level)
-            # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
-            if rc != 0x8004C708:
-                CSDK.check_err(rc, 'kRecForceDespeckleImg')
+            with _timing(timings, 'ocr_despeckle_image'):
+                method = despeckle_method
+                level = despeckle_level if despeckle_level else 0
+                with nogil:
+                    rc = kRecForceDespeckleImg(self.sdk.sid, self.handle, NULL, method, level)
+                # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
+                if rc != 0x8004C708:
+                    CSDK.check_err(rc, 'kRecForceDespeckleImg')
 
         # perform recognition
-        with nogil:
-            rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
-        CSDK.check_err(rc, 'kRecRecognize')
+        with _timing(timings, 'ocr_recognize'):
+            with nogil:
+                rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
+            CSDK.check_err(rc, 'kRecRecognize')
 
         # retrieve image
         cdef IMG_INFO img_info
         cdef LPBYTE bitmap
-        with nogil:
-            rc = kRecGetImgArea(self.sdk.sid, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap)
-        CSDK.check_err(rc, 'kRecGetImgArea')
-        cdef PyObject* o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
-        bytes = <object> o
-        with nogil:
-            rc = kRecFree(bitmap)
-        CSDK.check_err(rc, 'kRecFree')
-        size = (img_info.Size.cx, img_info.Size.cy)
+        cdef PyObject* o
         cdef BYTE[768] palette
-        if img_info.IsPalette == 1:
-            CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
-        if img_info.BitsPerPixel == 1:
-            self.image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
-        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
-            self.image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
-        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
-            self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
-            o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
-            palette_bytes = <object> o
-            self.image.putpalette(palette_bytes)
-        elif img_info.BitsPerPixel == 24:
-            self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
-        else:
-            raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
-        self.image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
+        with _timing(timings, 'ocr_get_image'):
+            with nogil:
+                rc = kRecGetImgArea(self.sdk.sid, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap)
+            CSDK.check_err(rc, 'kRecGetImgArea')
+            o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
+            bytes = <object> o
+            with nogil:
+                rc = kRecFree(bitmap)
+            CSDK.check_err(rc, 'kRecFree')
+            size = (img_info.Size.cx, img_info.Size.cy)
+            if img_info.IsPalette == 1:
+                CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
+            if img_info.BitsPerPixel == 1:
+                self.image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
+            elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
+                self.image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
+            elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
+                self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
+                o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
+                palette_bytes = <object> o
+                self.image.putpalette(palette_bytes)
+            elif img_info.BitsPerPixel == 24:
+                self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
+            else:
+                raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
+            self.image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
 
         # retrieve OCR zones
         cdef int nb_zones
         cdef int nb_cells
-        with nogil:
-            rc = kRecCopyOCRZones(self.handle)
-        CSDK.check_err(rc, 'kRecCopyOCRZones')
-        with nogil:
-            rc = kRecGetZoneCount(self.handle, &nb_zones)
-        CSDK.check_err(rc, 'kRecGetZoneCount')
-        self.zones = []
         cdef ZONE zone
         cdef CELL_INFO cell
-        for zone_id in range(nb_zones):
+        with _timing(timings, 'ocr_get_zones'):
             with nogil:
-                rc = kRecGetZoneInfo(self.handle, II_CURRENT, &zone, zone_id)
-            CSDK.check_err(rc, 'kRecGetZoneInfo')
-            cells = []
+                rc = kRecCopyOCRZones(self.handle)
+            CSDK.check_err(rc, 'kRecCopyOCRZones')
             with nogil:
-                rc = kRecGetCellCount(self.handle, zone_id, &nb_cells)
-            CSDK.check_err(rc, 'kRecGetCellCount')
-            for cell_id in range(nb_cells):
+                rc = kRecGetZoneCount(self.handle, &nb_zones)
+            CSDK.check_err(rc, 'kRecGetZoneCount')
+            self.zones = []
+            for zone_id in range(nb_zones):
                 with nogil:
-                    rc = kRecGetCellInfo(self.handle, II_CURRENT, zone_id, cell_id, &cell)
-                CSDK.check_err(rc, 'kRecGetCellInfo')
-                cells.append(build_cell(cell))
-            self.zones.append(build_zone(zone, cells))
+                    rc = kRecGetZoneInfo(self.handle, II_CURRENT, &zone, zone_id)
+                CSDK.check_err(rc, 'kRecGetZoneInfo')
+                cells = []
+                with nogil:
+                    rc = kRecGetCellCount(self.handle, zone_id, &nb_cells)
+                CSDK.check_err(rc, 'kRecGetCellCount')
+                for cell_id in range(nb_cells):
+                    with nogil:
+                        rc = kRecGetCellInfo(self.handle, II_CURRENT, zone_id, cell_id, &cell)
+                    CSDK.check_err(rc, 'kRecGetCellInfo')
+                    cells.append(build_cell(cell))
+                self.zones.append(build_zone(zone, cells))
 
         # retrieve letter choices
         cdef LPWCH pChoices
@@ -644,14 +662,15 @@ cdef class Page:
         # retrieve letters
         cdef LPLETTER pLetters
         cdef LONG nb_letters
-        with nogil:
-            rc = kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters)
-        CSDK.check_err(rc, 'kRecGetLetters')
-        self.letters = []
-        for letter_id in range(nb_letters):
-            letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, img_info.DPI.cy)
-            if letter:
-                self.letters.append(letter)
+        with _timing(timings, 'ocr_get_letters'):
+            with nogil:
+                rc = kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters)
+            CSDK.check_err(rc, 'kRecGetLetters')
+            self.letters = []
+            for letter_id in range(nb_letters):
+                letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, img_info.DPI.cy)
+                if letter:
+                    self.letters.append(letter)
                 
         # cleanup
         with nogil:
