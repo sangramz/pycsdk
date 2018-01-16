@@ -79,9 +79,6 @@ cdef class CSDK:
         CSDK.check_err(kRecSetCodePage(self.sid, 'UTF-8'), 'kRecSetCodePage')
         self.set_setting('Kernel.DTxt.UnicodeFileHeader', '')
         self.set_setting('Kernel.DTxt.txt.LineBreak', '\n')
-        
-        # enable all languages
-        CSDK.check_err(kRecManageLanguages(self.sid, SET_LANG, LANG_ALL_LATIN), 'kRecManageLanguages')        
 
     def __dealloc__(self):
         global nb_csdk_instances
@@ -142,7 +139,152 @@ cdef class CSDK:
     def set_single_language_detection(self, flag):
         cdef INTBOOL setting = 1 if flag == True else 0       
         CSDK.check_err(kRecSetSingleLanguageDetection(self.sid, setting), 'kRecSetSingleLanguageDetection')
-        
+    
+    @staticmethod
+    def _get_lang_code(lang):
+        switcher = {
+            "LANG_ALL": LANG_ALL,
+            "LANG_ALL_LATIN": LANG_ALL_LATIN,
+            "LANG_ALL_ASIAN": LANG_ALL_ASIAN,
+            "LANG_START": LANG_START,
+            "LANG_UD": LANG_UD,
+            "LANG_AUTO": LANG_AUTO,
+            "LANG_NO": LANG_NO,
+            "LANG_ENG": LANG_ENG,
+            "LANG_GER": LANG_GER,
+            "LANG_FRE": LANG_FRE,
+            "LANG_DUT": LANG_DUT,
+            "LANG_NOR": LANG_NOR,
+            "LANG_SWE": LANG_SWE,
+            "LANG_FIN": LANG_FIN,
+            "LANG_DAN": LANG_DAN,
+            "LANG_ICE": LANG_ICE,
+            "LANG_POR": LANG_POR,
+            "LANG_SPA": LANG_SPA,
+            "LANG_CAT": LANG_CAT,
+            "LANG_GAL": LANG_GAL,
+            "LANG_ITA": LANG_ITA,
+            "LANG_MAL": LANG_MAL,
+            "LANG_GRE": LANG_GRE,
+            "LANG_POL": LANG_POL,
+            "LANG_CZH": LANG_CZH,
+            "LANG_SLK": LANG_SLK,
+            "LANG_HUN": LANG_HUN,
+            "LANG_SLN": LANG_SLN,
+            "LANG_CRO": LANG_CRO,
+            "LANG_ROM": LANG_ROM,
+            "LANG_ALB": LANG_ALB,
+            "LANG_TUR": LANG_TUR,
+            "LANG_EST": LANG_EST,
+            "LANG_LAT": LANG_LAT,
+            "LANG_LIT": LANG_LIT,
+            "LANG_ESP": LANG_ESP,
+            "LANG_SRL": LANG_SRL,
+            "LANG_SRB": LANG_SRB,
+            "LANG_MAC": LANG_MAC,
+            "LANG_MOL": LANG_MOL,
+            "LANG_BUL": LANG_BUL,
+            "LANG_BEL": LANG_BEL,
+            "LANG_UKR": LANG_UKR,
+            "LANG_RUS": LANG_RUS,
+            "LANG_CHE": LANG_CHE,
+            "LANG_KAB": LANG_KAB,
+            "LANG_AFR": LANG_AFR,
+            "LANG_AYM": LANG_AYM,
+            "LANG_BAS": LANG_BAS,
+            "LANG_BEM": LANG_BEM,
+            "LANG_BLA": LANG_BLA,
+            "LANG_BRE": LANG_BRE,
+            "LANG_BRA": LANG_BRA,
+            "LANG_BUG": LANG_BUG,
+            "LANG_CHA": LANG_CHA,
+            "LANG_CHU": LANG_CHU,
+            "LANG_COR": LANG_COR,
+            "LANG_CRW": LANG_CRW,
+            "LANG_ESK": LANG_ESK,
+            "LANG_FAR": LANG_FAR,
+            "LANG_FIJ": LANG_FIJ,
+            "LANG_FRI": LANG_FRI,
+            "LANG_FRU": LANG_FRU,
+            "LANG_GLI": LANG_GLI,
+            "LANG_GLS": LANG_GLS,
+            "LANG_GAN": LANG_GAN,
+            "LANG_GUA": LANG_GUA,
+            "LANG_HAN": LANG_HAN,
+            "LANG_HAW": LANG_HAW,
+            "LANG_IDO": LANG_IDO,
+            "LANG_IND": LANG_IND,
+            "LANG_INT": LANG_INT,
+            "LANG_KAS": LANG_KAS,
+            "LANG_KAW": LANG_KAW,
+            "LANG_KIK": LANG_KIK,
+            "LANG_KON": LANG_KON,
+            "LANG_KPE": LANG_KPE,
+            "LANG_KUR": LANG_KUR,
+            "LANG_LTN": LANG_LTN,
+            "LANG_LUB": LANG_LUB,
+            "LANG_LUX": LANG_LUX,
+            "LANG_MLG": LANG_MLG,
+            "LANG_MLY": LANG_MLY,
+            "LANG_MLN": LANG_MLN,
+            "LANG_MAO": LANG_MAO,
+            "LANG_MAY": LANG_MAY,
+            "LANG_MIA": LANG_MIA,
+            "LANG_MIN": LANG_MIN,
+            "LANG_MOH": LANG_MOH,
+            "LANG_NAH": LANG_NAH,
+            "LANG_NYA": LANG_NYA,
+            "LANG_OCC": LANG_OCC,
+            "LANG_OJI": LANG_OJI,
+            "LANG_PAP": LANG_PAP,
+            "LANG_PID": LANG_PID,
+            "LANG_PRO": LANG_PRO,
+            "LANG_QUE": LANG_QUE,
+            "LANG_RHA": LANG_RHA,
+            "LANG_ROY": LANG_ROY,
+            "LANG_RUA": LANG_RUA,
+            "LANG_RUN": LANG_RUN,
+            "LANG_SAM": LANG_SAM,
+            "LANG_SAR": LANG_SAR,
+            "LANG_SHO": LANG_SHO,
+            "LANG_SIO": LANG_SIO,
+            "LANG_SMI": LANG_SMI,
+            "LANG_SML": LANG_SML,
+            "LANG_SMN": LANG_SMN,
+            "LANG_SMS": LANG_SMS,
+            "LANG_SOM": LANG_SOM,
+            "LANG_SOT": LANG_SOT,
+            "LANG_SUN": LANG_SUN,
+            "LANG_SWA": LANG_SWA,
+            "LANG_SWZ": LANG_SWZ,
+            "LANG_TAG": LANG_TAG,
+            "LANG_TAH": LANG_TAH,
+            "LANG_TIN": LANG_TIN,
+            "LANG_TON": LANG_TON,
+            "LANG_TUN": LANG_TUN,
+            "LANG_VIS": LANG_VIS,
+            "LANG_WEL": LANG_WEL,
+            "LANG_WEN": LANG_WEN,
+            "LANG_WOL": LANG_WOL,
+            "LANG_XHO": LANG_XHO,
+            "LANG_ZAP": LANG_ZAP,
+            "LANG_ZUL": LANG_ZUL,
+            "LANG_JPN": LANG_JPN,
+            "LANG_CHS": LANG_CHS,
+            "LANG_CHT": LANG_CHT,
+            "LANG_KRN": LANG_KRN,
+            "LANG_THA": LANG_THA,
+            "LANG_ARA": LANG_ARA,
+            "LANG_HEB": LANG_HEB
+        }
+        return switcher.get(lang, LANG_ALL)
+
+    def set_language(self, lang):
+        CSDK.check_err(kRecManageLanguages(self.sid, SET_LANG, CSDK._get_lang_code(lang)), 'kRecManageLanguages')        
+
+    def add_language(self, lang):
+        CSDK.check_err(kRecManageLanguages(self.sid, ADD_LANG, CSDK._get_lang_code(lang)), 'kRecManageLanguages')        
+
     def open_file(self, file_path):
         return File(self, file_path)
 
