@@ -1198,10 +1198,10 @@ cdef extern from "KernelApi.h":
         RM_FLAGS rm_support
     RECERR kRecSetLanguages(int sid, LANG_ENA *pLanguages)
     RECERR kRecGetLanguages(int sid, LANG_ENA *pLanguages)
-    RECERR kRecManageLanguages(int sid, MANAGE_LANG action, LANGUAGES language)
+    RECERR kRecManageLanguages(int sid, MANAGE_LANG action, LANGUAGES language) nogil
     RECERR kRecSetSingleLanguageDetection(int sid, INTBOOL bEnable)
     RECERR kRecGetSingleLanguageDetection(int sid, INTBOOL *pbEnable)
-    RECERR kRecGetPageLanguages(HPAGE hPage, LANG_ENA *pOcrLanguages)
+    RECERR kRecGetPageLanguages(HPAGE hPage, LANG_ENA *pOcrLanguages) nogil
     RECERR kRecGetLanguageInfo(LANGUAGES lang, LANGUAGE_INFO *pInfo)
     RECERR kRecFindLanguages(const LANGUAGE_INFO *pInfo, LANG_ENA *pLanguages)
     RECERR kRecFindLanguage(LPCTSTR pLangName, LANGUAGES *pLanguage)

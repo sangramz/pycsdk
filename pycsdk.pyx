@@ -280,10 +280,18 @@ cdef class CSDK:
         return switcher.get(lang, LANG_ALL)
 
     def set_language(self, lang):
-        CSDK.check_err(kRecManageLanguages(self.sid, SET_LANG, CSDK._get_lang_code(lang)), 'kRecManageLanguages')        
+        cdef RECERR rc
+        cdef LANGUAGES lang_code = CSDK._get_lang_code(lang)
+        with nogil:
+            rc = kRecManageLanguages(self.sid, SET_LANG, lang_code)
+        CSDK.check_err(rc, 'kRecManageLanguages')        
 
     def add_language(self, lang):
-        CSDK.check_err(kRecManageLanguages(self.sid, ADD_LANG, CSDK._get_lang_code(lang)), 'kRecManageLanguages')        
+        cdef RECERR rc
+        cdef LANGUAGES lang_code = CSDK._get_lang_code(lang)
+        with nogil:
+            rc = kRecManageLanguages(self.sid, ADD_LANG, lang_code)
+        CSDK.check_err(rc, 'kRecManageLanguages')        
 
     def open_file(self, file_path):
         return File(self, file_path)
@@ -363,8 +371,7 @@ class Letter:
     def __repr__(self):
         return pformat(vars(self))
 
-
-cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
+cdef get_lang_name(lang_code):
     switcher = {
         LANG_ALL: "LANG_ALL",
         LANG_ALL_LATIN: "LANG_ALL_LATIN",
@@ -500,6 +507,9 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
         LANG_ARA: "LANG_ARA",
         LANG_HEB: "LANG_HEB"
     }
+    return switcher.get(lang_code, 'UNKNOWN_{}'.format(lang_code))
+
+cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     if letter.code == 0x0fffd: # UNICODE_REJECTED
         return None
     cdef WCHAR* pCode = &letter.code
@@ -549,8 +559,8 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     elif letter.makeup & 0x0200 == 0x0200:
         orientation = 'R_LEFTTEXT'
     rtl = True if letter.makeup & 0x0400 else False
-    lang = switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang))
-    lang2 = switcher.get(letter.lang2, 'UNKNOWN_{}'.format(letter.lang2))
+    lang = get_lang_name(letter.lang)
+    lang2 = get_lang_name(letter.lang2)
     dictionary_word = True if letter.info & 0x40000000 else False
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
                   letter.cellNum, letter.zone, code, space_type, nb_spaces, choices, suggestions,
@@ -830,3 +840,14 @@ cdef class Page:
             rc = kRecFree(pSuggestions)
         CSDK.check_err(rc, 'kRecFree')
 
+    def get_languages(self):
+        cdef LANG_ENA languages[LANG_SIZE + 1]
+        cdef RECERR rc
+        with nogil:
+            rc = kRecGetPageLanguages(self.handle, languages)
+        CSDK.check_err(rc, 'kRecGetPageLanguages')
+        result = set()
+        for lang_code in range(int(LANG_SIZE)):
+            if languages[lang_code] == LANG_ENABLED:
+                result.add(get_lang_name(lang_code))
+        return result
