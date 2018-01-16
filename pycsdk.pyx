@@ -190,8 +190,8 @@ cdef class File:
 
 class Letter:
     def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, space_type, nb_spaces,
-                 choices, suggestions, lang, confidence, italic, bold, end_word, end_line, end_cell, end_row, in_cell,
-                 orientation, rtl):
+                 choices, suggestions, lang, lang2, dictionary_word, confidence, italic, bold,
+                 end_word, end_line, end_cell, end_row, in_cell, orientation, rtl):
         self.top = top
         self.left = left
         self.bottom = bottom
@@ -205,6 +205,8 @@ class Letter:
         self.choices = choices
         self.suggestions = suggestions
         self.lang = lang
+        self.lang2 = lang2
+        self.dictionary_word = dictionary_word
         self.confidence = confidence
         self.italic = italic
         self.bold = bold
@@ -405,9 +407,12 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     elif letter.makeup & 0x0200 == 0x0200:
         orientation = 'R_LEFTTEXT'
     rtl = True if letter.makeup & 0x0400 else False
+    lang = switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang))
+    lang2 = switcher.get(letter.lang2, 'UNKNOWN_{}'.format(letter.lang2))
+    dictionary_word = True if letter.info & 0x40000000 else False
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
                   letter.cellNum, letter.zone, code, space_type, nb_spaces, choices, suggestions,
-                  switcher.get(letter.lang, 'UNKNOWN_{}'.format(letter.lang)), confidence,
+                  lang, lang2, dictionary_word, confidence,
                   italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl)
 
                   
