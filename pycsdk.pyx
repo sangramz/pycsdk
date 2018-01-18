@@ -20,6 +20,159 @@ csdk_lock = RLock()
 nb_csdk_instances = 0
 local_data = local()
 
+
+class TwoWayDict(dict):
+    def __setitem__(self, key, value):
+        if key in self:
+            del self[key]
+        if value in self:
+            del self[value]
+        dict.__setitem__(self, key, value)
+        dict.__setitem__(self, value, key)
+
+    def __delitem__(self, key):
+        dict.__delitem__(self, self[key])
+        dict.__delitem__(self, key)
+
+    def __len__(self):
+        return dict.__len__(self) // 2
+
+
+lang_dict = TwoWayDict()
+lang_dict[LANG_ALL] = "LANG_ALL",
+lang_dict[LANG_ALL_LATIN] = "LANG_ALL_LATIN",
+lang_dict[LANG_ALL_ASIAN] = "LANG_ALL_ASIAN",
+lang_dict[LANG_START] = "LANG_START",
+lang_dict[LANG_UD] = "LANG_UD",
+lang_dict[LANG_AUTO] = "LANG_AUTO",
+lang_dict[LANG_NO] = "LANG_NO",
+lang_dict[LANG_ENG] = "LANG_ENG",
+lang_dict[LANG_GER] = "LANG_GER",
+lang_dict[LANG_FRE] = "LANG_FRE",
+lang_dict[LANG_DUT] = "LANG_DUT",
+lang_dict[LANG_NOR] = "LANG_NOR",
+lang_dict[LANG_SWE] = "LANG_SWE",
+lang_dict[LANG_FIN] = "LANG_FIN",
+lang_dict[LANG_DAN] = "LANG_DAN",
+lang_dict[LANG_ICE] = "LANG_ICE",
+lang_dict[LANG_POR] = "LANG_POR",
+lang_dict[LANG_SPA] = "LANG_SPA",
+lang_dict[LANG_CAT] = "LANG_CAT",
+lang_dict[LANG_GAL] = "LANG_GAL",
+lang_dict[LANG_ITA] = "LANG_ITA",
+lang_dict[LANG_MAL] = "LANG_MAL",
+lang_dict[LANG_GRE] = "LANG_GRE",
+lang_dict[LANG_POL] = "LANG_POL",
+lang_dict[LANG_CZH] = "LANG_CZH",
+lang_dict[LANG_SLK] = "LANG_SLK",
+lang_dict[LANG_HUN] = "LANG_HUN",
+lang_dict[LANG_SLN] = "LANG_SLN",
+lang_dict[LANG_CRO] = "LANG_CRO",
+lang_dict[LANG_ROM] = "LANG_ROM",
+lang_dict[LANG_ALB] = "LANG_ALB",
+lang_dict[LANG_TUR] = "LANG_TUR",
+lang_dict[LANG_EST] = "LANG_EST",
+lang_dict[LANG_LAT] = "LANG_LAT",
+lang_dict[LANG_LIT] = "LANG_LIT",
+lang_dict[LANG_ESP] = "LANG_ESP",
+lang_dict[LANG_SRL] = "LANG_SRL",
+lang_dict[LANG_SRB] = "LANG_SRB",
+lang_dict[LANG_MAC] = "LANG_MAC",
+lang_dict[LANG_MOL] = "LANG_MOL",
+lang_dict[LANG_BUL] = "LANG_BUL",
+lang_dict[LANG_BEL] = "LANG_BEL",
+lang_dict[LANG_UKR] = "LANG_UKR",
+lang_dict[LANG_RUS] = "LANG_RUS",
+lang_dict[LANG_CHE] = "LANG_CHE",
+lang_dict[LANG_KAB] = "LANG_KAB",
+lang_dict[LANG_AFR] = "LANG_AFR",
+lang_dict[LANG_AYM] = "LANG_AYM",
+lang_dict[LANG_BAS] = "LANG_BAS",
+lang_dict[LANG_BEM] = "LANG_BEM",
+lang_dict[LANG_BLA] = "LANG_BLA",
+lang_dict[LANG_BRE] = "LANG_BRE",
+lang_dict[LANG_BRA] = "LANG_BRA",
+lang_dict[LANG_BUG] = "LANG_BUG",
+lang_dict[LANG_CHA] = "LANG_CHA",
+lang_dict[LANG_CHU] = "LANG_CHU",
+lang_dict[LANG_COR] = "LANG_COR",
+lang_dict[LANG_CRW] = "LANG_CRW",
+lang_dict[LANG_ESK] = "LANG_ESK",
+lang_dict[LANG_FAR] = "LANG_FAR",
+lang_dict[LANG_FIJ] = "LANG_FIJ",
+lang_dict[LANG_FRI] = "LANG_FRI",
+lang_dict[LANG_FRU] = "LANG_FRU",
+lang_dict[LANG_GLI] = "LANG_GLI",
+lang_dict[LANG_GLS] = "LANG_GLS",
+lang_dict[LANG_GAN] = "LANG_GAN",
+lang_dict[LANG_GUA] = "LANG_GUA",
+lang_dict[LANG_HAN] = "LANG_HAN",
+lang_dict[LANG_HAW] = "LANG_HAW",
+lang_dict[LANG_IDO] = "LANG_IDO",
+lang_dict[LANG_IND] = "LANG_IND",
+lang_dict[LANG_INT] = "LANG_INT",
+lang_dict[LANG_KAS] = "LANG_KAS",
+lang_dict[LANG_KAW] = "LANG_KAW",
+lang_dict[LANG_KIK] = "LANG_KIK",
+lang_dict[LANG_KON] = "LANG_KON",
+lang_dict[LANG_KPE] = "LANG_KPE",
+lang_dict[LANG_KUR] = "LANG_KUR",
+lang_dict[LANG_LTN] = "LANG_LTN",
+lang_dict[LANG_LUB] = "LANG_LUB",
+lang_dict[LANG_LUX] = "LANG_LUX",
+lang_dict[LANG_MLG] = "LANG_MLG",
+lang_dict[LANG_MLY] = "LANG_MLY",
+lang_dict[LANG_MLN] = "LANG_MLN",
+lang_dict[LANG_MAO] = "LANG_MAO",
+lang_dict[LANG_MAY] = "LANG_MAY",
+lang_dict[LANG_MIA] = "LANG_MIA",
+lang_dict[LANG_MIN] = "LANG_MIN",
+lang_dict[LANG_MOH] = "LANG_MOH",
+lang_dict[LANG_NAH] = "LANG_NAH",
+lang_dict[LANG_NYA] = "LANG_NYA",
+lang_dict[LANG_OCC] = "LANG_OCC",
+lang_dict[LANG_OJI] = "LANG_OJI",
+lang_dict[LANG_PAP] = "LANG_PAP",
+lang_dict[LANG_PID] = "LANG_PID",
+lang_dict[LANG_PRO] = "LANG_PRO",
+lang_dict[LANG_QUE] = "LANG_QUE",
+lang_dict[LANG_RHA] = "LANG_RHA",
+lang_dict[LANG_ROY] = "LANG_ROY",
+lang_dict[LANG_RUA] = "LANG_RUA",
+lang_dict[LANG_RUN] = "LANG_RUN",
+lang_dict[LANG_SAM] = "LANG_SAM",
+lang_dict[LANG_SAR] = "LANG_SAR",
+lang_dict[LANG_SHO] = "LANG_SHO",
+lang_dict[LANG_SIO] = "LANG_SIO",
+lang_dict[LANG_SMI] = "LANG_SMI",
+lang_dict[LANG_SML] = "LANG_SML",
+lang_dict[LANG_SMN] = "LANG_SMN",
+lang_dict[LANG_SMS] = "LANG_SMS",
+lang_dict[LANG_SOM] = "LANG_SOM",
+lang_dict[LANG_SOT] = "LANG_SOT",
+lang_dict[LANG_SUN] = "LANG_SUN",
+lang_dict[LANG_SWA] = "LANG_SWA",
+lang_dict[LANG_SWZ] = "LANG_SWZ",
+lang_dict[LANG_TAG] = "LANG_TAG",
+lang_dict[LANG_TAH] = "LANG_TAH",
+lang_dict[LANG_TIN] = "LANG_TIN",
+lang_dict[LANG_TON] = "LANG_TON",
+lang_dict[LANG_TUN] = "LANG_TUN",
+lang_dict[LANG_VIS] = "LANG_VIS",
+lang_dict[LANG_WEL] = "LANG_WEL",
+lang_dict[LANG_WEN] = "LANG_WEN",
+lang_dict[LANG_WOL] = "LANG_WOL",
+lang_dict[LANG_XHO] = "LANG_XHO",
+lang_dict[LANG_ZAP] = "LANG_ZAP",
+lang_dict[LANG_ZUL] = "LANG_ZUL",
+lang_dict[LANG_JPN] = "LANG_JPN",
+lang_dict[LANG_CHS] = "LANG_CHS",
+lang_dict[LANG_CHT] = "LANG_CHT",
+lang_dict[LANG_KRN] = "LANG_KRN",
+lang_dict[LANG_THA] = "LANG_THA",
+lang_dict[LANG_ARA] = "LANG_ARA",
+lang_dict[LANG_HEB] = "LANG_HEB"
+
 cdef class CSDK:
     cdef int sid
     cdef int initialized
@@ -139,159 +292,28 @@ cdef class CSDK:
     def set_single_language_detection(self, flag):
         cdef INTBOOL setting = 1 if flag == True else 0       
         CSDK.check_err(kRecSetSingleLanguageDetection(self.sid, setting), 'kRecSetSingleLanguageDetection')
-    
+
+    def set_language(self, lang_code):
+        cdef RECERR rc
+        cdef LANGUAGES lang = lang_code
+        with nogil:
+            rc = kRecManageLanguages(self.sid, SET_LANG, lang)
+        CSDK.check_err(rc, 'kRecManageLanguages')        
+
+    def add_language(self, lang_code):
+        cdef RECERR rc
+        cdef LANGUAGES lang = lang_code
+        with nogil:
+            rc = kRecManageLanguages(self.sid, ADD_LANG, lang)
+        CSDK.check_err(rc, 'kRecManageLanguages')
+
     @staticmethod
-    def _get_lang_code(lang):
-        switcher = {
-            "LANG_ALL": LANG_ALL,
-            "LANG_ALL_LATIN": LANG_ALL_LATIN,
-            "LANG_ALL_ASIAN": LANG_ALL_ASIAN,
-            "LANG_START": LANG_START,
-            "LANG_UD": LANG_UD,
-            "LANG_AUTO": LANG_AUTO,
-            "LANG_NO": LANG_NO,
-            "LANG_ENG": LANG_ENG,
-            "LANG_GER": LANG_GER,
-            "LANG_FRE": LANG_FRE,
-            "LANG_DUT": LANG_DUT,
-            "LANG_NOR": LANG_NOR,
-            "LANG_SWE": LANG_SWE,
-            "LANG_FIN": LANG_FIN,
-            "LANG_DAN": LANG_DAN,
-            "LANG_ICE": LANG_ICE,
-            "LANG_POR": LANG_POR,
-            "LANG_SPA": LANG_SPA,
-            "LANG_CAT": LANG_CAT,
-            "LANG_GAL": LANG_GAL,
-            "LANG_ITA": LANG_ITA,
-            "LANG_MAL": LANG_MAL,
-            "LANG_GRE": LANG_GRE,
-            "LANG_POL": LANG_POL,
-            "LANG_CZH": LANG_CZH,
-            "LANG_SLK": LANG_SLK,
-            "LANG_HUN": LANG_HUN,
-            "LANG_SLN": LANG_SLN,
-            "LANG_CRO": LANG_CRO,
-            "LANG_ROM": LANG_ROM,
-            "LANG_ALB": LANG_ALB,
-            "LANG_TUR": LANG_TUR,
-            "LANG_EST": LANG_EST,
-            "LANG_LAT": LANG_LAT,
-            "LANG_LIT": LANG_LIT,
-            "LANG_ESP": LANG_ESP,
-            "LANG_SRL": LANG_SRL,
-            "LANG_SRB": LANG_SRB,
-            "LANG_MAC": LANG_MAC,
-            "LANG_MOL": LANG_MOL,
-            "LANG_BUL": LANG_BUL,
-            "LANG_BEL": LANG_BEL,
-            "LANG_UKR": LANG_UKR,
-            "LANG_RUS": LANG_RUS,
-            "LANG_CHE": LANG_CHE,
-            "LANG_KAB": LANG_KAB,
-            "LANG_AFR": LANG_AFR,
-            "LANG_AYM": LANG_AYM,
-            "LANG_BAS": LANG_BAS,
-            "LANG_BEM": LANG_BEM,
-            "LANG_BLA": LANG_BLA,
-            "LANG_BRE": LANG_BRE,
-            "LANG_BRA": LANG_BRA,
-            "LANG_BUG": LANG_BUG,
-            "LANG_CHA": LANG_CHA,
-            "LANG_CHU": LANG_CHU,
-            "LANG_COR": LANG_COR,
-            "LANG_CRW": LANG_CRW,
-            "LANG_ESK": LANG_ESK,
-            "LANG_FAR": LANG_FAR,
-            "LANG_FIJ": LANG_FIJ,
-            "LANG_FRI": LANG_FRI,
-            "LANG_FRU": LANG_FRU,
-            "LANG_GLI": LANG_GLI,
-            "LANG_GLS": LANG_GLS,
-            "LANG_GAN": LANG_GAN,
-            "LANG_GUA": LANG_GUA,
-            "LANG_HAN": LANG_HAN,
-            "LANG_HAW": LANG_HAW,
-            "LANG_IDO": LANG_IDO,
-            "LANG_IND": LANG_IND,
-            "LANG_INT": LANG_INT,
-            "LANG_KAS": LANG_KAS,
-            "LANG_KAW": LANG_KAW,
-            "LANG_KIK": LANG_KIK,
-            "LANG_KON": LANG_KON,
-            "LANG_KPE": LANG_KPE,
-            "LANG_KUR": LANG_KUR,
-            "LANG_LTN": LANG_LTN,
-            "LANG_LUB": LANG_LUB,
-            "LANG_LUX": LANG_LUX,
-            "LANG_MLG": LANG_MLG,
-            "LANG_MLY": LANG_MLY,
-            "LANG_MLN": LANG_MLN,
-            "LANG_MAO": LANG_MAO,
-            "LANG_MAY": LANG_MAY,
-            "LANG_MIA": LANG_MIA,
-            "LANG_MIN": LANG_MIN,
-            "LANG_MOH": LANG_MOH,
-            "LANG_NAH": LANG_NAH,
-            "LANG_NYA": LANG_NYA,
-            "LANG_OCC": LANG_OCC,
-            "LANG_OJI": LANG_OJI,
-            "LANG_PAP": LANG_PAP,
-            "LANG_PID": LANG_PID,
-            "LANG_PRO": LANG_PRO,
-            "LANG_QUE": LANG_QUE,
-            "LANG_RHA": LANG_RHA,
-            "LANG_ROY": LANG_ROY,
-            "LANG_RUA": LANG_RUA,
-            "LANG_RUN": LANG_RUN,
-            "LANG_SAM": LANG_SAM,
-            "LANG_SAR": LANG_SAR,
-            "LANG_SHO": LANG_SHO,
-            "LANG_SIO": LANG_SIO,
-            "LANG_SMI": LANG_SMI,
-            "LANG_SML": LANG_SML,
-            "LANG_SMN": LANG_SMN,
-            "LANG_SMS": LANG_SMS,
-            "LANG_SOM": LANG_SOM,
-            "LANG_SOT": LANG_SOT,
-            "LANG_SUN": LANG_SUN,
-            "LANG_SWA": LANG_SWA,
-            "LANG_SWZ": LANG_SWZ,
-            "LANG_TAG": LANG_TAG,
-            "LANG_TAH": LANG_TAH,
-            "LANG_TIN": LANG_TIN,
-            "LANG_TON": LANG_TON,
-            "LANG_TUN": LANG_TUN,
-            "LANG_VIS": LANG_VIS,
-            "LANG_WEL": LANG_WEL,
-            "LANG_WEN": LANG_WEN,
-            "LANG_WOL": LANG_WOL,
-            "LANG_XHO": LANG_XHO,
-            "LANG_ZAP": LANG_ZAP,
-            "LANG_ZUL": LANG_ZUL,
-            "LANG_JPN": LANG_JPN,
-            "LANG_CHS": LANG_CHS,
-            "LANG_CHT": LANG_CHT,
-            "LANG_KRN": LANG_KRN,
-            "LANG_THA": LANG_THA,
-            "LANG_ARA": LANG_ARA,
-            "LANG_HEB": LANG_HEB
-        }
-        return switcher.get(lang, LANG_ALL)
+    def get_lang_name(lang_code):
+        return lang_dict[lang_code] if lang_code in lang_dict else None
 
-    def set_language(self, lang):
-        cdef RECERR rc
-        cdef LANGUAGES lang_code = CSDK._get_lang_code(lang)
-        with nogil:
-            rc = kRecManageLanguages(self.sid, SET_LANG, lang_code)
-        CSDK.check_err(rc, 'kRecManageLanguages')        
-
-    def add_language(self, lang):
-        cdef RECERR rc
-        cdef LANGUAGES lang_code = CSDK._get_lang_code(lang)
-        with nogil:
-            rc = kRecManageLanguages(self.sid, ADD_LANG, lang_code)
-        CSDK.check_err(rc, 'kRecManageLanguages')        
+    @staticmethod
+    def get_lang_code(lang_name):
+        return lang_dict[lang_name] if lang_name in lang_dict else None
 
     def open_file(self, file_path):
         return File(self, file_path)
@@ -371,143 +393,6 @@ class Letter:
     def __repr__(self):
         return pformat(vars(self))
 
-cdef get_lang_name(lang_code):
-    switcher = {
-        LANG_ALL: "LANG_ALL",
-        LANG_ALL_LATIN: "LANG_ALL_LATIN",
-        LANG_ALL_ASIAN: "LANG_ALL_ASIAN",
-        LANG_START: "LANG_START",
-        LANG_UD: "LANG_UD",
-        LANG_AUTO: "LANG_AUTO",
-        LANG_NO: "LANG_NO",
-        LANG_ENG: "LANG_ENG",
-        LANG_GER: "LANG_GER",
-        LANG_FRE: "LANG_FRE",
-        LANG_DUT: "LANG_DUT",
-        LANG_NOR: "LANG_NOR",
-        LANG_SWE: "LANG_SWE",
-        LANG_FIN: "LANG_FIN",
-        LANG_DAN: "LANG_DAN",
-        LANG_ICE: "LANG_ICE",
-        LANG_POR: "LANG_POR",
-        LANG_SPA: "LANG_SPA",
-        LANG_CAT: "LANG_CAT",
-        LANG_GAL: "LANG_GAL",
-        LANG_ITA: "LANG_ITA",
-        LANG_MAL: "LANG_MAL",
-        LANG_GRE: "LANG_GRE",
-        LANG_POL: "LANG_POL",
-        LANG_CZH: "LANG_CZH",
-        LANG_SLK: "LANG_SLK",
-        LANG_HUN: "LANG_HUN",
-        LANG_SLN: "LANG_SLN",
-        LANG_CRO: "LANG_CRO",
-        LANG_ROM: "LANG_ROM",
-        LANG_ALB: "LANG_ALB",
-        LANG_TUR: "LANG_TUR",
-        LANG_EST: "LANG_EST",
-        LANG_LAT: "LANG_LAT",
-        LANG_LIT: "LANG_LIT",
-        LANG_ESP: "LANG_ESP",
-        LANG_SRL: "LANG_SRL",
-        LANG_SRB: "LANG_SRB",
-        LANG_MAC: "LANG_MAC",
-        LANG_MOL: "LANG_MOL",
-        LANG_BUL: "LANG_BUL",
-        LANG_BEL: "LANG_BEL",
-        LANG_UKR: "LANG_UKR",
-        LANG_RUS: "LANG_RUS",
-        LANG_CHE: "LANG_CHE",
-        LANG_KAB: "LANG_KAB",
-        LANG_AFR: "LANG_AFR",
-        LANG_AYM: "LANG_AYM",
-        LANG_BAS: "LANG_BAS",
-        LANG_BEM: "LANG_BEM",
-        LANG_BLA: "LANG_BLA",
-        LANG_BRE: "LANG_BRE",
-        LANG_BRA: "LANG_BRA",
-        LANG_BUG: "LANG_BUG",
-        LANG_CHA: "LANG_CHA",
-        LANG_CHU: "LANG_CHU",
-        LANG_COR: "LANG_COR",
-        LANG_CRW: "LANG_CRW",
-        LANG_ESK: "LANG_ESK",
-        LANG_FAR: "LANG_FAR",
-        LANG_FIJ: "LANG_FIJ",
-        LANG_FRI: "LANG_FRI",
-        LANG_FRU: "LANG_FRU",
-        LANG_GLI: "LANG_GLI",
-        LANG_GLS: "LANG_GLS",
-        LANG_GAN: "LANG_GAN",
-        LANG_GUA: "LANG_GUA",
-        LANG_HAN: "LANG_HAN",
-        LANG_HAW: "LANG_HAW",
-        LANG_IDO: "LANG_IDO",
-        LANG_IND: "LANG_IND",
-        LANG_INT: "LANG_INT",
-        LANG_KAS: "LANG_KAS",
-        LANG_KAW: "LANG_KAW",
-        LANG_KIK: "LANG_KIK",
-        LANG_KON: "LANG_KON",
-        LANG_KPE: "LANG_KPE",
-        LANG_KUR: "LANG_KUR",
-        LANG_LTN: "LANG_LTN",
-        LANG_LUB: "LANG_LUB",
-        LANG_LUX: "LANG_LUX",
-        LANG_MLG: "LANG_MLG",
-        LANG_MLY: "LANG_MLY",
-        LANG_MLN: "LANG_MLN",
-        LANG_MAO: "LANG_MAO",
-        LANG_MAY: "LANG_MAY",
-        LANG_MIA: "LANG_MIA",
-        LANG_MIN: "LANG_MIN",
-        LANG_MOH: "LANG_MOH",
-        LANG_NAH: "LANG_NAH",
-        LANG_NYA: "LANG_NYA",
-        LANG_OCC: "LANG_OCC",
-        LANG_OJI: "LANG_OJI",
-        LANG_PAP: "LANG_PAP",
-        LANG_PID: "LANG_PID",
-        LANG_PRO: "LANG_PRO",
-        LANG_QUE: "LANG_QUE",
-        LANG_RHA: "LANG_RHA",
-        LANG_ROY: "LANG_ROY",
-        LANG_RUA: "LANG_RUA",
-        LANG_RUN: "LANG_RUN",
-        LANG_SAM: "LANG_SAM",
-        LANG_SAR: "LANG_SAR",
-        LANG_SHO: "LANG_SHO",
-        LANG_SIO: "LANG_SIO",
-        LANG_SMI: "LANG_SMI",
-        LANG_SML: "LANG_SML",
-        LANG_SMN: "LANG_SMN",
-        LANG_SMS: "LANG_SMS",
-        LANG_SOM: "LANG_SOM",
-        LANG_SOT: "LANG_SOT",
-        LANG_SUN: "LANG_SUN",
-        LANG_SWA: "LANG_SWA",
-        LANG_SWZ: "LANG_SWZ",
-        LANG_TAG: "LANG_TAG",
-        LANG_TAH: "LANG_TAH",
-        LANG_TIN: "LANG_TIN",
-        LANG_TON: "LANG_TON",
-        LANG_TUN: "LANG_TUN",
-        LANG_VIS: "LANG_VIS",
-        LANG_WEL: "LANG_WEL",
-        LANG_WEN: "LANG_WEN",
-        LANG_WOL: "LANG_WOL",
-        LANG_XHO: "LANG_XHO",
-        LANG_ZAP: "LANG_ZAP",
-        LANG_ZUL: "LANG_ZUL",
-        LANG_JPN: "LANG_JPN",
-        LANG_CHS: "LANG_CHS",
-        LANG_CHT: "LANG_CHT",
-        LANG_KRN: "LANG_KRN",
-        LANG_THA: "LANG_THA",
-        LANG_ARA: "LANG_ARA",
-        LANG_HEB: "LANG_HEB"
-    }
-    return switcher.get(lang_code, 'UNKNOWN_{}'.format(lang_code))
 
 cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     if letter.code == 0x0fffd: # UNICODE_REJECTED
@@ -559,8 +444,8 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     elif letter.makeup & 0x0200 == 0x0200:
         orientation = 'R_LEFTTEXT'
     rtl = True if letter.makeup & 0x0400 else False
-    lang = get_lang_name(letter.lang)
-    lang2 = get_lang_name(letter.lang2)
+    lang = lang_dict[letter.lang] if letter.lang in lang_dict else None
+    lang2 = lang_dict[letter.lang2] if letter.lang2 in lang_dict else None
     dictionary_word = True if letter.info & 0x40000000 else False
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
                   letter.cellNum, letter.zone, code, space_type, nb_spaces, choices, suggestions,
@@ -846,8 +731,10 @@ cdef class Page:
         with nogil:
             rc = kRecGetPageLanguages(self.handle, languages)
         CSDK.check_err(rc, 'kRecGetPageLanguages')
+        cdef LANGUAGES lang
         result = set()
         for lang_code in range(int(LANG_SIZE)):
             if languages[lang_code] == LANG_ENABLED:
-                result.add(get_lang_name(lang_code))
+                lang = lang_code
+                result.add(lang)
         return result
