@@ -28,17 +28,19 @@ from pycsdk import *
 from PIL import Image
     
 csdk = CSDK('my_company', 'my_product', license_file='/path/to/license_file', code='license_code')
-csdk.set_rm_tradeoff(TO_ACCURATE)
+csdk.set_setting('Kernel.OcrMgr.TradeOff', TO_ACCURATE)
 csdk.set_setting('Kernel.OcrMgr.PDF.TradeOff', TO_ACCURATE)
 csdk.set_setting('Kernel.OcrMgr.PDF.ProcessingMode', PDF_PM_AUTO)
 csdk.set_setting('Kernel.OcrMgr.DefaultRecognitionModule', RM_OMNIFONT_PLUS3W)
+csdk.set_language(LANG_FRE)
+csdk.add_language(LANG_ENG)
 
 # note each file can be handled by a child process with e.g. os.fork()
 # (the CSDK does not support multithreading)
 with csdk.open_file('myfile.pdf') as f:
     for page_id in range(f.nb_pages):
         with f.open_page(page_id) as p:
-            p.process() 
+            p.process(despeckle_method=DESPECKLE_MEDIAN, remove_rule_lines=True) 
             print('found {} zones, {} letters'.format(len(p.zones), len(p.letters)))
             
             # do something interesting with zones (and cells in zones) and letters
