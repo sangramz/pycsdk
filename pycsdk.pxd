@@ -939,7 +939,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecMergeImgArea(int sid, HPAGE hPageDst, LPCRECT pRectDst, HPAGE hPageSrc, LPCRECT pRectSrc, REC_COLOR tColor)
     RECERR kRecConvertImg(int sid, HPAGE hPage, WORD BitsPerPixel, UINT flags)
     RECERR kRecLineRemoval(int sid, HPAGE hPage, const RECT *pRect)
-    RECERR kRecRemoveLines(int sid, HPAGE hPage, IMAGEINDEX iiImg, const RECT *pRect)
+    RECERR kRecRemoveLines(int sid, HPAGE hPage, IMAGEINDEX iiImg, const RECT *pRect) nogil
     RECERR kRecGetLineCount(HPAGE hPage, int *pnLines)
     RECERR kRecGetLineInfo(HPAGE hPage, IMAGEINDEX iiImg, PRLINE pLine, int nLine)
     RECERR kRecGetFrameCount(HPAGE hPage, int *pnFrames)

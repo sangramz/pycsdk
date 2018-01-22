@@ -591,7 +591,7 @@ cdef class Page:
     def __exit__(self, type, value, traceback):
         pass
 
-    def process(self, despeckle_method = None, despeckle_level = None, timings = dict()):
+    def process(self, despeckle_method = None, despeckle_level = None, remove_rule_lines = False, timings = dict()):
         # preprocess image
         cdef PREPROC_INFO preproc_info;
         cdef RECERR rc
@@ -616,6 +616,13 @@ cdef class Page:
                 # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
                 if rc != 0x8004C708:
                     CSDK.check_err(rc, 'kRecForceDespeckleImg')
+
+        # remove rule lines if required
+        if remove_rule_lines:
+            with _timing(timings, 'ocr_remove_rule_lines'):
+                with nogil:
+                    rc = kRecRemoveLines(self.sdk.sid, self.handle, II_BW, NULL)
+                CSDK.check_err(rc, 'kRecRemoveLines')
 
         # perform recognition
         with _timing(timings, 'ocr_recognize'):
