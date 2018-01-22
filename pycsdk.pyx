@@ -287,13 +287,6 @@ cdef class CSDK:
         cdef PyObject* o = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, setting_value, length)
         return <object> o
 
-    def set_rm_tradeoff(self, tradeoff):
-        CSDK.check_err(kRecSetRMTradeoff(self.sid, tradeoff), 'kRecSetRMTradeoff')
-
-    def set_single_language_detection(self, flag):
-        cdef INTBOOL setting = 1 if flag == True else 0       
-        CSDK.check_err(kRecSetSingleLanguageDetection(self.sid, setting), 'kRecSetSingleLanguageDetection')
-
     def set_language(self, lang_code):
         cdef RECERR rc
         cdef LANGUAGES lang = lang_code
