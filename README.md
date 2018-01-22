@@ -32,7 +32,6 @@ csdk.set_rm_tradeoff(TO_ACCURATE)
 csdk.set_setting('Kernel.OcrMgr.PDF.TradeOff', TO_ACCURATE)
 csdk.set_setting('Kernel.OcrMgr.PDF.ProcessingMode', PDF_PM_AUTO)
 csdk.set_setting('Kernel.OcrMgr.DefaultRecognitionModule', RM_OMNIFONT_PLUS3W)
-csdk.set_single_language_detection(True)
 
 # note each file can be handled by a child process with e.g. os.fork()
 # (the CSDK does not support multithreading)
