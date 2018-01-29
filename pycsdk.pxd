@@ -999,7 +999,7 @@ cdef extern from "KernelApi.h":
     RECERR kRecGetNongriddedTableDetect(int sid, INTBOOL *bEnable)
     RECERR kRecSetForceSingleColumn(int sid, INTBOOL bForceSingle)
     RECERR kRecGetForceSingleColumn(int sid, INTBOOL *pbForceSingle)
-    RECERR kRecLocateZones(int sid, HPAGE hPage)
+    RECERR kRecLocateZones(int sid, HPAGE hPage) nogil
     RECERR kRecSetPageDescription(int sid, DWORD PageDesc)
     RECERR kRecGetPageDescription(int sid, DWORD *pPageDesc)
     RECERR kRecGetZoneCount(HPAGE hPage, int *pnZones) nogil
