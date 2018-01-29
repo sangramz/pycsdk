@@ -616,6 +616,12 @@ cdef class Page:
                 # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
                 if rc != 0x8004C708:
                     CSDK.check_err(rc, 'kRecForceDespeckleImg')
+                    
+        # locate zones before removing rule lines
+        with _timing(timings, 'ocr_locate_zones'):
+            with nogil:
+                rc = kRecLocateZones(self.sdk.sid, self.handle)
+            CSDK.check_err(rc, 'kRecLocateZones')
 
         # remove rule lines if required
         if remove_rule_lines:
@@ -631,36 +637,8 @@ cdef class Page:
             CSDK.check_err(rc, 'kRecRecognize')
 
         # retrieve image
-        cdef IMG_INFO img_info
-        cdef LPBYTE bitmap
-        cdef PyObject* o
-        cdef BYTE[768] palette
         with _timing(timings, 'ocr_get_image'):
-            with nogil:
-                rc = kRecGetImgArea(self.sdk.sid, self.handle, II_CURRENT, NULL, NULL, &img_info, &bitmap)
-            CSDK.check_err(rc, 'kRecGetImgArea')
-            o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
-            bytes = <object> o
-            with nogil:
-                rc = kRecFree(bitmap)
-            CSDK.check_err(rc, 'kRecFree')
-            size = (img_info.Size.cx, img_info.Size.cy)
-            if img_info.IsPalette == 1:
-                CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, II_CURRENT, palette), 'kRecGetImgPalette')
-            if img_info.BitsPerPixel == 1:
-                self.image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
-            elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
-                self.image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
-            elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
-                self.image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
-                o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
-                palette_bytes = <object> o
-                self.image.putpalette(palette_bytes)
-            elif img_info.BitsPerPixel == 24:
-                self.image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
-            else:
-                raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
-            self.image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
+            self.image_dpi, self.image = self._get_image(II_CURRENT)
 
         # retrieve OCR zones
         cdef int nb_zones
@@ -713,7 +691,7 @@ cdef class Page:
             CSDK.check_err(rc, 'kRecGetLetters')
             self.letters = []
             for letter_id in range(nb_letters):
-                letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, img_info.DPI.cy)
+                letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, self.image_dpi[1])
                 if letter:
                     self.letters.append(letter)
                 
@@ -727,6 +705,46 @@ cdef class Page:
         with nogil:
             rc = kRecFree(pSuggestions)
         CSDK.check_err(rc, 'kRecFree')
+
+
+    def _get_image(self, image_index):
+        cdef RECERR rc
+        cdef IMG_INFO img_info
+        cdef LPBYTE bitmap
+        cdef PyObject* o
+        cdef BYTE[768] palette
+        cdef IMAGEINDEX img_index = image_index
+        with nogil:
+            rc = kRecGetImgArea(self.sdk.sid, self.handle, img_index, NULL, NULL, &img_info, &bitmap)
+        CSDK.check_err(rc, 'kRecGetImgArea')
+        o = PyBytes_FromStringAndSize(<const char*> bitmap, img_info.BytesPerLine * img_info.Size.cy)
+        bytes = <object> o
+        with nogil:
+            rc = kRecFree(bitmap)
+        CSDK.check_err(rc, 'kRecFree')
+        if img_info.IsPalette == 1:
+            CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, image_index, palette), 'kRecGetImgPalette')
+        if img_info.BitsPerPixel == 1:
+            image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
+        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
+            image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
+        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
+            image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
+            o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
+            palette_bytes = <object> o
+            image.putpalette(palette_bytes)
+        elif img_info.BitsPerPixel == 24:
+            image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
+        else:
+            raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
+        image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
+        return image_dpi, image
+
+
+    def get_image(self, image_index):
+        _, image = self._get_image(image_index)
+        return image
+
 
     def get_languages(self):
         cdef LANG_ENA languages[LANG_SIZE + 1]
