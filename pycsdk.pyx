@@ -1,6 +1,7 @@
 # cython: c_string_type=str, c_string_encoding=ascii
 
 import os
+import tempfile
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdlib cimport malloc, free
 from cpython.ref cimport PyObject
@@ -311,26 +312,48 @@ cdef class CSDK:
 
     def open_file(self, file_path):
         return File(self, file_path)
-
+        
+    def build_file(self, file_path, file_pages):
+        cdef RECERR rc
+        cdef LPCTSTR pFilePath = file_path
+        cdef HIMGFILE handle
+        with nogil:
+            rc = kRecOpenImgFile(pFilePath, &handle, 1, FF_TIFNO)
+        
+        
 
 cdef class File:
     cdef CSDK sdk
     cdef HIMGFILE handle
     cdef public:
+        object read_only
         object nb_pages
 
-    def __cinit__(self, CSDK sdk, file_path):
+    def __cinit__(self, CSDK sdk, file_path, write_pdf = False):
         self.sdk = sdk
         self.handle = NULL
         cdef RECERR rc
         cdef LPCTSTR pFilePath = file_path
+        cdef int mode
+        cdef IMF_FORMAT format
+        if write_pdf:
+            mode = 2 # IMGF_RDWR
+            format = FF_PDF
+            self.read_only = False
+        else:
+            mode = 0 # IMGF_READ
+            format = FF_TIFNO # 0, not used
+            self.read_only = True
         with nogil:
-            rc = kRecOpenImgFile(pFilePath, &self.handle, 0, FF_TIFNO)
+            rc = kRecOpenImgFile(pFilePath, &self.handle, mode, format)
         CSDK.check_err(rc, 'kRecOpenImgFile')
         cdef int n
-        with nogil:
-            rc = kRecGetImgFilePageCount(self.handle, &n)
-        CSDK.check_err(rc, 'kRecGetImgFilePageCount')
+        if write_pdf:
+            n = 0
+        else:
+            with nogil:
+                rc = kRecGetImgFilePageCount(self.handle, &n)
+            CSDK.check_err(rc, 'kRecGetImgFilePageCount')
         self.nb_pages = n
 
     def close(self):
@@ -351,8 +374,36 @@ cdef class File:
         pass
         
     def open_page(self, page_id):
-        return Page(self, page_id)
-        
+        if self.read_only:
+            return Page(self, page_id)
+        else:
+            raise NotImplementedError('not supported in read-write mode')
+    
+    # append an image to this output PDF file
+    def add_page(self, image, format):
+        if self.read_only:
+            raise Exception('cannot add page to a read-only file')
+
+        # save image to a temporary file
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        cdef RECERR rc
+        cdef LPCTSTR pFilePath = tf.name
+        cdef HPAGE hPage
+        try:
+            with tf:
+                image.save(tf, format)
+            with nogil:
+                rc = kRecLoadImgF(self.sdk.sid, pFilePath, &hPage, 0)
+            CSDK.check_err(rc, 'kRecLoadImgF')
+            with nogil:
+                rc = kRecSaveImg(self.sdk.sid, self.handle, FF_PDF, hPage, II_ORIGINAL, 1)
+            CSDK.check_err(rc, 'kRecSaveImg')
+            with nogil:
+                rc = kRecFreeImg(hPage)
+            CSDK.check_err(rc, 'kRecFreeImg')
+        finally:
+            os.unlink(tf.name)
+    
 
 class Letter:
     def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, space_type, nb_spaces,

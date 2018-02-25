@@ -142,6 +142,11 @@ cpdef enum IMF_FORMAT:
     FF_WMP
     FF_JBIG
     FF_OPG
+    FF_PDF
+    FF_PDF_MRC
+    FF_JPG
+    FF_JPG2K
+    FF_TIF
     FF_SIZE
 cpdef enum IMF_IMAGEQUALITY:
     IMF_IMAGEQUALITY_MIN = 0
@@ -780,12 +785,12 @@ cdef extern from "KernelApi.h":
     RECERR kRecSetImfLoadFlags(int sid, DWORD fFlag)
     RECERR kRecGetImfLoadFlags(int sid, DWORD *pfFlag)
     RECERR kRecLoadImg(int sid, HIMGFILE hIFile, HPAGE *phPage, int iPage) nogil
-    RECERR kRecLoadImgF(int sid, LPCTSTR pFilename, HPAGE *phPage, int nPage)
+    RECERR kRecLoadImgF(int sid, LPCTSTR pFilename, HPAGE *phPage, int nPage) nogil
     RECERR kRecLoadImgDataStream(int sid, HIMGFILE hIFile, HPAGE *phPage, int iPage)
     RECERR kRecLoadImgDataStreamF(int sid, LPCTSTR pFilename, HPAGE *phPage, int nPage)
     RECERR kRecDecompressImgDataStream(int sid, HPAGE hPage)
     RECERR kRecFreeImgDataStream(int sid, HPAGE hPage)
-    RECERR kRecLoadImgM(int sid, BYTE *lpBitmap, LPCIMG_INFO lpImg, HPAGE *phPage)
+    RECERR kRecLoadImgM(int sid, BYTE *lpBitmap, LPCIMG_INFO lpImg, HPAGE *phPage) nogil
     RECERR kRecLoadImgMC(int sid, BYTE *lpBuf, size_t bufLen, LPCCOMPRESSED_IMG_INFO lpCImg, HPAGE *phPage)
     RECERR kRecLoadImgDataStreamMC(int sid, BYTE *lpBuf, size_t bufLen, LPCOMPRESSED_IMG_INFO lpCImg, HPAGE *phPage)
     RECERR kRecSetCompressionLevel(int sid, int CompressionLevel)
@@ -795,9 +800,9 @@ cdef extern from "KernelApi.h":
     RECERR kRecSetMRCCompressionSettingsFromLevel(int sid, int CompressionLevel, COMPRESSION_TRADEOFF CompressionTradeOff)
     RECERR kRecSetJPGQuality(int sid, int nQuality)
     RECERR kRecGetJPGQuality(int sid, int *pnQuality)
-    RECERR kRecSaveImg(int sid, HIMGFILE hIFile, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend)
-    RECERR kRecSaveImgForce(int sid, HIMGFILE hIFile, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend)
-    RECERR kRecSaveImgF(int sid, LPCTSTR pFilename, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX img, INTBOOL bAppend)
+    RECERR kRecSaveImg(int sid, HIMGFILE hIFile, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend) nogil
+    RECERR kRecSaveImgForce(int sid, HIMGFILE hIFile, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend) nogil
+    RECERR kRecSaveImgF(int sid, LPCTSTR pFilename, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX img, INTBOOL bAppend) nogil
     RECERR kRecSaveImgForceF(int sid, LPCTSTR pFilename, IMF_FORMAT Imgfileformat, HPAGE hPage, IMAGEINDEX iiImg, INTBOOL bAppend)
     RECERR kRecSaveImgArea(int sid, HIMGFILE hIFile, IMF_FORMAT format, HPAGE hPage, IMAGEINDEX iiImg, LPCRECT pRect, INTBOOL append)
     RECERR kRecSaveImgAreaF(int sid, LPCTSTR pFilename, IMF_FORMAT format, HPAGE hPage, IMAGEINDEX iiImg, LPCRECT pRect, INTBOOL append)
