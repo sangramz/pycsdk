@@ -313,14 +313,9 @@ cdef class CSDK:
     def open_file(self, file_path):
         return File(self, file_path)
         
-    def build_file(self, file_path, file_pages):
-        cdef RECERR rc
-        cdef LPCTSTR pFilePath = file_path
-        cdef HIMGFILE handle
-        with nogil:
-            rc = kRecOpenImgFile(pFilePath, &handle, 1, FF_TIFNO)
-        
-        
+    def create_file(self, file_path):
+        return File(self, file_path, write_pdf=True)
+
 
 cdef class File:
     cdef CSDK sdk
