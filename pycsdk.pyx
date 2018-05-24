@@ -174,6 +174,11 @@ lang_dict[LANG_THA] = 'LANG_THA'
 lang_dict[LANG_ARA] = 'LANG_ARA'
 lang_dict[LANG_HEB] = 'LANG_HEB'
 
+class CSDKException(Exception):
+
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(*args, **kwargs)
+    
 
 cdef class CSDK:
     cdef int sid
@@ -205,7 +210,7 @@ cdef class CSDK:
                 local_data.warnings.append('OmniPage: {} returned warning {:08x}: {}'.format(api_function, rc, err_sym))
             else:
                 error_kind = switcher.get(err_info, 'UNKNOWN_{}'.format(err_info))
-                raise Exception('OmniPage: {} returned error {:08x}: {} ({})'.format(api_function, rc, err_sym, error_kind))
+                raise CSDKException('OmniPage: {} returned error {:08x}: {} ({})'.format(api_function, rc, err_sym, error_kind))
                 
     @staticmethod
     def warnings():
@@ -256,20 +261,20 @@ cdef class CSDK:
         cdef INTBOOL hasSetting
         CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
         if hasSetting == 0:
-            raise Exception('OmniPage: unknown setting')
+            raise CSDKException('OmniPage: unknown setting "{}"'.format(setting_name))
         if isinstance(setting_value, int):
             CSDK.check_err(kRecSettingSetInt(self.sid, setting, setting_value), 'kRecSettingSetInt');
         elif isinstance(setting_value, str):
             CSDK.check_err(kRecSettingSetString(self.sid, setting, setting_value), 'kRecSettingSetString');
         else:
-            raise Exception('OmniPage: unsupported setting value type: {}'.format(setting_value))
+            raise CSDKException('OmniPage: unsupported setting value type: {}'.format(setting_value))
 
     def get_setting_int(self, setting_name):
         cdef HSETTING setting
         cdef INTBOOL hasSetting
         CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
         if hasSetting == 0:
-            raise Exception('OmniPage: unknown setting')
+            raise CSDKException('OmniPage: unknown setting "{}"'.format(setting_name))
         cdef int setting_value
         CSDK.check_err(kRecSettingGetInt(self.sid, setting, &setting_value), 'kRecSettingGetInt');
         return setting_value
@@ -279,7 +284,7 @@ cdef class CSDK:
         cdef INTBOOL hasSetting
         CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
         if hasSetting == 0:
-            raise Exception('OmniPage: unknown setting')
+            raise CSDKException('OmniPage: unknown setting "{}"'.format(setting_name))
         cdef const WCHAR* setting_value
         CSDK.check_err(kRecSettingGetUString(self.sid, setting, &setting_value), 'kRecSettingGetUString');
         length = 0
@@ -377,7 +382,7 @@ cdef class File:
     # append an image to this output PDF file
     def add_page(self, image, format):
         if self.read_only:
-            raise Exception('cannot add page to a read-only file')
+            raise CSDKException('OmniPage: cannot add page to a read-only file')
 
         # save image to a temporary file
         tf = tempfile.NamedTemporaryFile(delete=False)
@@ -782,7 +787,7 @@ cdef class Page:
         elif img_info.BitsPerPixel == 24:
             image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
         else:
-            raise Exception('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
+            raise CSDKException('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
         image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
         return image_dpi, image
 
