@@ -177,7 +177,7 @@ lang_dict[LANG_HEB] = 'LANG_HEB'
 class CSDKException(Exception):
 
     def __init__(self, *args, **kwargs):
-        Exception.__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
     
 
 cdef class CSDK:
