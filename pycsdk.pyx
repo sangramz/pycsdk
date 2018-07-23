@@ -642,7 +642,7 @@ cdef class Page:
     def __exit__(self, type, value, traceback):
         pass
 
-    def process(self, despeckle_method = None, despeckle_level = None, remove_rule_lines = False, timings = dict()):
+    def pre_process(self, timings = dict()):
         # preprocess image
         cdef PREPROC_INFO preproc_info;
         cdef RECERR rc
@@ -655,7 +655,9 @@ cdef class Page:
             CSDK.check_err(rc, 'kRecGetPreprocessInfo')
             self.image_rotation = build_rotation(preproc_info.Rotation)
 
+    def process(self, despeckle_method = None, despeckle_level = None, remove_rule_lines = False, timings = dict()):
         # try to force despeckle if required
+        cdef RECERR rc
         cdef DESPECKLE_METHOD method
         cdef int level
         if despeckle_method:
