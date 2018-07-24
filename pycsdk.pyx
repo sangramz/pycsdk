@@ -778,16 +778,16 @@ cdef class Page:
         if img_info.IsPalette == 1:
             CSDK.check_err(kRecGetImgPalette(self.sdk.sid, self.handle, image_index, palette), 'kRecGetImgPalette')
         if img_info.BitsPerPixel == 1:
-            image = Image.frombuffer('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
+            image = Image.frombytes('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
-            image = Image.frombuffer('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
+            image = Image.frombytes('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
-            image = Image.frombuffer('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
+            image = Image.frombytes('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
             o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
             palette_bytes = <object> o
             image.putpalette(palette_bytes)
         elif img_info.BitsPerPixel == 24:
-            image = Image.frombuffer('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
+            image = Image.frombytes('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
         else:
             raise CSDKException('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
         image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
