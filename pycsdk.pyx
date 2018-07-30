@@ -640,7 +640,7 @@ cdef class Page:
         return self
 
     def __exit__(self, type, value, traceback):
-        pass
+        self.close()
 
     def pre_process(self, timings = dict()):
         # preprocess image
