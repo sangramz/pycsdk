@@ -959,8 +959,8 @@ cdef extern from "KernelApi.h":
     RECERR kRecFreeImg(HPAGE hPage) nogil
     RECERR kRecGetImgInfo(int sid, HPAGE hPage, IMAGEINDEX iiImg, LPIMG_INFO pImg)
     RECERR kRecGetImgMetaData(HPAGE hPage, HSETTING *phMetaData)
-    RECERR kRecGetImgFlags(HPAGE hPage, IMG_FLAGS Flag, INTBOOL *pbValue)
-    RECERR kRecSetImgFlags(HPAGE hPage, IMG_FLAGS Flag, INTBOOL bValue)
+    RECERR kRecGetImgFlags(HPAGE hPage, IMG_FLAGS Flag, INTBOOL *pbValue) nogil
+    RECERR kRecSetImgFlags(HPAGE hPage, IMG_FLAGS Flag, INTBOOL bValue) nogil
     RECERR kRecSetImgResolution(HPAGE hPage, SIZE DPI)
     RECERR kRecSetRetainColor(int sid, RETAINCOLOR RetainColor)
     RECERR kRecGetRetainColor(int sid, RETAINCOLOR *pRetainColor)

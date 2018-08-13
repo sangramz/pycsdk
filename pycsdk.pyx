@@ -642,6 +642,21 @@ cdef class Page:
     def __exit__(self, type, value, traceback):
         self.close()
 
+    @property
+    def camera_image(self):
+        cdef INTBOOL flag;
+        with nogil:
+            rc = kRecGetImgFlags(self.handle, IMG_FLAGS_CAMERAIMAGE, &flag)
+        CSDK.check_err(rc, 'kRecGetImgFlags')
+        return True if flag != 0 else False
+
+    @camera_image.setter
+    def camera_image(self, value):
+        cdef INTBOOL flag = value;
+        with nogil:
+            rc = kRecSetImgFlags(self.handle, IMG_FLAGS_CAMERAIMAGE, flag)
+        CSDK.check_err(rc, 'kRecSetImgFlags')
+
     def pre_process(self, timings = dict()):
         # preprocess image
         cdef PREPROC_INFO preproc_info;
