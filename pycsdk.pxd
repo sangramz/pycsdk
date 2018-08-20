@@ -954,10 +954,10 @@ cdef extern from "KernelApi.h":
     RECERR kRecDetectDropoutColorWeights(int sid, HPAGE hPage, IMAGEINDEX iiImg, RECT *pRect, int *pwred, int *pwgreen, int *pwblue)
     RECERR kRecDropImg(HPAGE hPage, IMAGEINDEX iiImg)
     RECERR kRecTransformCoordinates(HPAGE hPage, IMAGEINDEX iiDst, IMAGEINDEX iiSrc, int nP, LPPOINT pPoint)
-    RECERR kRecRotateImg(int sid, HPAGE hPage, IMG_ROTATE Rotation)
+    RECERR kRecRotateImg(int sid, HPAGE hPage, IMG_ROTATE Rotation) nogil
     RECERR kRecCreateImg(int sid, int sizeX, int sizeY, int dpiX, int dpiY, WORD BitsPerPixel, HPAGE *phPage)
     RECERR kRecFreeImg(HPAGE hPage) nogil
-    RECERR kRecGetImgInfo(int sid, HPAGE hPage, IMAGEINDEX iiImg, LPIMG_INFO pImg)
+    RECERR kRecGetImgInfo(int sid, HPAGE hPage, IMAGEINDEX iiImg, LPIMG_INFO pImg) nogil
     RECERR kRecGetImgMetaData(HPAGE hPage, HSETTING *phMetaData)
     RECERR kRecGetImgFlags(HPAGE hPage, IMG_FLAGS Flag, INTBOOL *pbValue) nogil
     RECERR kRecSetImgFlags(HPAGE hPage, IMG_FLAGS Flag, INTBOOL bValue) nogil

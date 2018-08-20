@@ -2,9 +2,8 @@
 
 import os
 import tempfile
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from libc.stdlib cimport malloc, free
 from cpython.ref cimport PyObject
+from cpython.float cimport PyFloat_FromDouble
 from PIL import Image
 from pprint import pformat
 from threading import RLock, local
@@ -174,17 +173,17 @@ lang_dict[LANG_THA] = 'LANG_THA'
 lang_dict[LANG_ARA] = 'LANG_ARA'
 lang_dict[LANG_HEB] = 'LANG_HEB'
 
+
 class CSDKException(Exception):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
+
 
 cdef class CSDK:
     cdef int sid
     cdef int initialized
-    
-    
+
     @staticmethod
     def check_err(rc, api_function):
         # log warning, raise exception for error
@@ -210,8 +209,9 @@ cdef class CSDK:
                 local_data.warnings.append('OmniPage: {} returned warning {:08x}: {}'.format(api_function, rc, err_sym))
             else:
                 error_kind = switcher.get(err_info, 'UNKNOWN_{}'.format(err_info))
-                raise CSDKException('OmniPage: {} returned error {:08x}: {} ({})'.format(api_function, rc, err_sym, error_kind))
-                
+                raise CSDKException(
+                    'OmniPage: {} returned error {:08x}: {} ({})'.format(api_function, rc, err_sym, error_kind))
+
     @staticmethod
     def warnings():
         result = []
@@ -220,7 +220,7 @@ cdef class CSDK:
             del local_data.warnings
         return result
 
-    def __cinit__(self,  company_name, product_name, license_file=None, code=None):
+    def __cinit__(self, company_name, product_name, license_file=None, code=None):
         global nb_csdk_instances
         self.sid = -1
         self.initialized = 0
@@ -234,7 +234,7 @@ cdef class CSDK:
 
         # create a settings collection for this CSDK instance
         self.sid = kRecCreateSettingsCollection(-1)
-        
+
         # output files as UTF-8 without BOM
         CSDK.check_err(kRecSetCodePage(self.sid, 'UTF-8'), 'kRecSetCodePage')
         self.set_setting('Kernel.DTxt.UnicodeFileHeader', '')
@@ -255,7 +255,7 @@ cdef class CSDK:
 
     def __exit__(self, type, value, traceback):
         pass
-        
+
     def set_setting(self, setting_name, setting_value):
         cdef HSETTING setting
         cdef INTBOOL hasSetting
@@ -285,12 +285,12 @@ cdef class CSDK:
         CSDK.check_err(kRecSettingGetHandle(NULL, setting_name, &setting, &hasSetting), 'kRecSettingGetHandle')
         if hasSetting == 0:
             raise CSDKException('OmniPage: unknown setting "{}"'.format(setting_name))
-        cdef const WCHAR* setting_value
+        cdef const WCHAR*setting_value
         CSDK.check_err(kRecSettingGetUString(self.sid, setting, &setting_value), 'kRecSettingGetUString');
         length = 0
         while setting_value[length] != 0:
             length += 1
-        cdef PyObject* o = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, setting_value, length)
+        cdef PyObject*o = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, setting_value, length)
         return <object> o
 
     def set_language(self, lang_code):
@@ -298,7 +298,7 @@ cdef class CSDK:
         cdef LANGUAGES lang = lang_code
         with nogil:
             rc = kRecManageLanguages(self.sid, SET_LANG, lang)
-        CSDK.check_err(rc, 'kRecManageLanguages')        
+        CSDK.check_err(rc, 'kRecManageLanguages')
 
     def add_language(self, lang_code):
         cdef RECERR rc
@@ -317,10 +317,9 @@ cdef class CSDK:
 
     def open_file(self, file_path):
         return File(self, file_path)
-        
+
     def create_file(self, file_path):
         return File(self, file_path, write_pdf=True)
-
 
 cdef class File:
     cdef CSDK sdk
@@ -337,12 +336,12 @@ cdef class File:
         cdef int mode
         cdef IMF_FORMAT format
         if write_pdf:
-            mode = 2 # IMGF_RDWR
+            mode = 2  # IMGF_RDWR
             format = FF_PDF
             self.read_only = False
         else:
-            mode = 0 # IMGF_READ
-            format = FF_TIFNO # 0, not used
+            mode = 0  # IMGF_READ
+            format = FF_TIFNO  # 0, not used
             self.read_only = True
         with nogil:
             rc = kRecOpenImgFile(pFilePath, &self.handle, mode, format)
@@ -372,13 +371,13 @@ cdef class File:
 
     def __exit__(self, type, value, traceback):
         pass
-        
+
     def open_page(self, page_id):
         if self.read_only:
             return Page(self, page_id)
         else:
             raise NotImplementedError('not supported in read-write mode')
-    
+
     # append an image to this output PDF file
     def add_page(self, image, format):
         if self.read_only:
@@ -403,7 +402,7 @@ cdef class File:
             CSDK.check_err(rc, 'kRecFreeImg')
         finally:
             os.unlink(tf.name)
-    
+
 
 class Letter:
     def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, space_type, nb_spaces,
@@ -434,22 +433,24 @@ class Letter:
         self.in_cell = in_cell
         self.orientation = orientation
         self.rtl = rtl
-            
+
     def __repr__(self):
         return pformat(vars(self))
 
 
 cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
-    if letter.code == 0x0fffd: # UNICODE_REJECTED
+    if letter.code == 0x0fffd:  # UNICODE_REJECTED
         return None
-    cdef WCHAR* pCode = &letter.code
+    cdef WCHAR*pCode = &letter.code
     code = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pCode, 1)
     if letter.cntChoices > 1:
-        choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices, letter.cntChoices - 1)
+        choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices,
+                                                     letter.cntChoices - 1)
     else:
         choices = ''
     if letter.cntSuggestions > 1:
-        suggestions = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pSuggestions + letter.ndxSuggestions, letter.cntSuggestions - 1)
+        suggestions = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pSuggestions + letter.ndxSuggestions,
+                                                         letter.cntSuggestions - 1)
     else:
         suggestions = ''
     nb_spaces = None
@@ -494,12 +495,12 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     lang2 = letter.lang2
     lang2 = lang_dict[lang2] if lang2 in lang_dict else None
     dictionary_word = True if letter.info & 0x40000000 else False
-    return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width, letter.capHeight * 100.0 / dpi,
+    return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width,
+                  letter.capHeight * 100.0 / dpi,
                   letter.cellNum, letter.zone, code, space_type, nb_spaces, choices, suggestions,
                   lang, lang2, dictionary_word, confidence,
                   italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl)
 
-                  
 cdef zone_type(ZONETYPE type):
     switcher = {
         WT_FLOW: "WT_FLOW",
@@ -513,7 +514,6 @@ cdef zone_type(ZONETYPE type):
         WT_RIGHTTEXT: "WT_RIGHTTEXT"
     }
     return switcher.get(type, 'UNKNOWN_'.format(type))
-
 
 cdef line_style(RLSTYLE style):
     switcher = {
@@ -555,7 +555,7 @@ class Cell:
 
 cdef build_cell(CELL_INFO cell):
     return Cell(cell.rect.top, cell.rect.left, cell.rect.bottom, cell.rect.right,
-                zone_type(cell.type), cell.cellcolor, cell.lcolor, cell.tcolor, cell.rcolor, cell.bcolor, 
+                zone_type(cell.type), cell.cellcolor, cell.lcolor, cell.tcolor, cell.rcolor, cell.bcolor,
                 line_style(cell.lstyle), line_style(cell.tstyle), line_style(cell.rstyle), line_style(cell.bstyle),
                 cell.lwidth, cell.twidth, cell.rwidth, cell.bwidth)
 
@@ -578,19 +578,15 @@ cdef build_zone(ZONE zone, cells):
                 zone_type(zone.type), cells)
 
 
-cdef build_rotation(IMG_ROTATE img_rotate):
-    switcher = {
-        ROT_AUTO: "ROT_AUTO",
-        ROT_NO: "ROT_NO",
-        ROT_RIGHT: "ROT_RIGHT",
-        ROT_DOWN: "ROT_DOWN",
-        ROT_LEFT: "ROT_LEFT",
-        ROT_FLIPPED: "ROT_FLIPPED",
-        ROT_RIGHT_FLIPPED: "ROT_RIGHT_FLIPPED",
-        ROT_DOWN_FLIPPED: "ROT_DOWN_FLIPPED",
-        ROT_LEFT_FLIPPED: "ROT_LEFT_FLIPPED"
-    }
-    return switcher.get(img_rotate, 'UNKNOWN_{}'.format(img_rotate))
+class PreprocInfo:
+    def __init__(self, rotation, slope, matrix, flags):
+        self.rotation = rotation
+        self.slope = slope
+        self.matrix = matrix
+        self.flags = flags
+
+    def __repr__(self):
+        return pformat(vars(self))
 
 
 @contextmanager
@@ -602,7 +598,6 @@ def _timing(timings, name):
         duration = datetime.now() - started
         timings[name] = duration.total_seconds()
 
-
 cdef class Page:
     cdef CSDK sdk
     cdef HPAGE handle
@@ -610,9 +605,6 @@ cdef class Page:
         object page_id
         object zones
         object letters
-        object image
-        object image_dpi
-        object image_rotation
 
     def __cinit__(self, File file, page_id):
         self.sdk = file.sdk
@@ -658,55 +650,89 @@ cdef class Page:
         CSDK.check_err(rc, 'kRecSetImgFlags')
 
     def pre_process(self, timings = dict()):
-        # preprocess image
-        cdef PREPROC_INFO preproc_info;
         cdef RECERR rc
         with _timing(timings, 'ocr_preprocess_image'):
             with nogil:
                 rc = kRecPreprocessImg(self.sdk.sid, self.handle)
             CSDK.check_err(rc, 'kRecPreprocessImg')
-            with nogil:
-                rc = kRecGetPreprocessInfo(self.handle, &preproc_info)
-            CSDK.check_err(rc, 'kRecGetPreprocessInfo')
-            self.image_rotation = build_rotation(preproc_info.Rotation)
 
-    def process(self, despeckle_method = None, despeckle_level = None, remove_rule_lines = False, timings = dict()):
-        # try to force despeckle if required
+    def rotate(self, rotation, timings=dict()):
+        cdef RECERR rc
+        cdef IMG_ROTATE img_rotate
+        with _timing(timings, 'ocr_rotate_image'):
+            img_rotate = rotation
+            with nogil:
+                rc = kRecRotateImg(self.sdk.sid, self.handle, img_rotate)
+            CSDK.check_err(rc, 'kRecRotateImg')
+
+    def despeckle(self, despeckle_method, despeckle_level=None, timings=dict()):
         cdef RECERR rc
         cdef DESPECKLE_METHOD method
         cdef int level
-        if despeckle_method:
-            with _timing(timings, 'ocr_despeckle_image'):
-                method = despeckle_method
-                level = despeckle_level if despeckle_level else 0
-                with nogil:
-                    rc = kRecForceDespeckleImg(self.sdk.sid, self.handle, NULL, method, level)
-                # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
-                if rc != 0x8004C708:
-                    CSDK.check_err(rc, 'kRecForceDespeckleImg')
-                    
-        # locate zones before removing rule lines
+        with _timing(timings, 'ocr_despeckle_image'):
+            method = despeckle_method
+            level = despeckle_level if despeckle_level else 0
+            with nogil:
+                rc = kRecForceDespeckleImg(self.sdk.sid, self.handle, NULL, method, level)
+            # despeckle fails if current image is not black and white: ignore IMG_BITSPERPIXEL_ERR
+            if rc != 0x8004C708:
+                CSDK.check_err(rc, 'kRecForceDespeckleImg')
+
+    @property
+    def preproc_info(self):
+        cdef RECERR rc
+        cdef PREPROC_INFO preproc_info;
+        with nogil:
+            rc = kRecGetPreprocessInfo(self.handle, &preproc_info)
+        CSDK.check_err(rc, 'kRecGetPreprocessInfo')
+        matrix = list()
+        for i in range(0, 8):
+            matrix.append(PyFloat_FromDouble(preproc_info.Matrix[i]))
+        flags = set()
+        if preproc_info.Flags & PREPROC_INFO_FAXCORRECTION:
+            flags.add('PREPROC_INFO_FAXCORRECTION')
+        if preproc_info.Flags & PREPROC_INFO_INVERSION:
+            flags.add('PREPROC_INFO_INVERSION')
+        if preproc_info.Flags & PREPROC_INFO_3DDESKEW:
+            flags.add('PREPROC_INFO_3DDESKEW')
+        if preproc_info.Flags & PREPROC_INFO_STRAIGHTENED:
+            flags.add('PREPROC_INFO_STRAIGHTENED')
+        if preproc_info.Flags & PREPROC_INFO_HALFTONE:
+            flags.add('PREPROC_INFO_HALFTONE')
+        switcher = {
+            ROT_AUTO: "ROT_AUTO",
+            ROT_NO: "ROT_NO",
+            ROT_RIGHT: "ROT_RIGHT",
+            ROT_DOWN: "ROT_DOWN",
+            ROT_LEFT: "ROT_LEFT",
+            ROT_FLIPPED: "ROT_FLIPPED",
+            ROT_RIGHT_FLIPPED: "ROT_RIGHT_FLIPPED",
+            ROT_DOWN_FLIPPED: "ROT_DOWN_FLIPPED",
+            ROT_LEFT_FLIPPED: "ROT_LEFT_FLIPPED"
+        }
+        rot = preproc_info.Rotation
+        return PreprocInfo(switcher.get(rot, 'UNKNOWN_{}'.format(rot)), preproc_info.Slope, matrix, flags)
+
+    def locate_zones(self, timings=dict()):
+        cdef RECERR rc
         with _timing(timings, 'ocr_locate_zones'):
             with nogil:
                 rc = kRecLocateZones(self.sdk.sid, self.handle)
             CSDK.check_err(rc, 'kRecLocateZones')
 
-        # remove rule lines if required
-        if remove_rule_lines:
-            with _timing(timings, 'ocr_remove_rule_lines'):
-                with nogil:
-                    rc = kRecRemoveLines(self.sdk.sid, self.handle, II_BW, NULL)
-                CSDK.check_err(rc, 'kRecRemoveLines')
+    def remove_rule_lines(self, timings=dict()):
+        cdef RECERR rc
+        with _timing(timings, 'ocr_remove_rule_lines'):
+            with nogil:
+                rc = kRecRemoveLines(self.sdk.sid, self.handle, II_BW, NULL)
+            CSDK.check_err(rc, 'kRecRemoveLines')
 
-        # perform recognition
+    def recognize(self, timings=dict()):
+        cdef RECERR rc
         with _timing(timings, 'ocr_recognize'):
             with nogil:
                 rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
             CSDK.check_err(rc, 'kRecRecognize')
-
-        # retrieve image
-        with _timing(timings, 'ocr_get_image'):
-            self.image_dpi, self.image = self._get_image(II_CURRENT)
 
         # retrieve OCR zones
         cdef int nb_zones
@@ -753,16 +779,22 @@ cdef class Page:
         # retrieve letters
         cdef LPLETTER pLetters
         cdef LONG nb_letters
+        cdef IMG_INFO img_info
         with _timing(timings, 'ocr_get_letters'):
+            # we need vertical DPI to build letter font size
+            with nogil:
+                rc = kRecGetImgInfo(self.sdk.sid, self.handle, II_CURRENT, &img_info)
+            CSDK.check_err(rc, 'kRecGetImgInfo')
+            dpi_y = img_info.DPI.cy
             with nogil:
                 rc = kRecGetLetters(self.handle, II_CURRENT, &pLetters, &nb_letters)
             CSDK.check_err(rc, 'kRecGetLetters')
             self.letters = []
             for letter_id in range(nb_letters):
-                letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, self.image_dpi[1])
+                letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, dpi_y)
                 if letter:
                     self.letters.append(letter)
-                
+
         # cleanup
         with nogil:
             rc = kRecFree(pLetters)
@@ -774,12 +806,11 @@ cdef class Page:
             rc = kRecFree(pSuggestions)
         CSDK.check_err(rc, 'kRecFree')
 
-
     def _get_image(self, image_index):
         cdef RECERR rc
         cdef IMG_INFO img_info
         cdef LPBYTE bitmap
-        cdef PyObject* o
+        cdef PyObject *o
         cdef BYTE[768] palette
         cdef IMAGEINDEX img_index = image_index
         with nogil:
@@ -795,24 +826,25 @@ cdef class Page:
         if img_info.BitsPerPixel == 1:
             image = Image.frombytes('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
-            image = Image.frombytes('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
+            image = Image.frombytes('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine,
+                                    1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
-            image = Image.frombytes('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
+            image = Image.frombytes('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine,
+                                    1)
             o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
             palette_bytes = <object> o
             image.putpalette(palette_bytes)
         elif img_info.BitsPerPixel == 24:
-            image = Image.frombytes('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
+            image = Image.frombytes('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB',
+                                    img_info.BytesPerLine, 1)
         else:
             raise CSDKException('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
         image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
         return image_dpi, image
 
-
     def get_image(self, image_index):
-        _, image = self._get_image(image_index)
-        return image
-
+        image_dpi, image = self._get_image(image_index)
+        return image_dpi, image
 
     def get_languages(self):
         cdef LANG_ENA languages[LANG_SIZE + 1]
