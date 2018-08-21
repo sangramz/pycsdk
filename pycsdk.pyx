@@ -444,13 +444,11 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     cdef WCHAR*pCode = &letter.code
     code = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pCode, 1)
     if letter.cntChoices > 1:
-        choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices,
-                                                     letter.cntChoices - 1)
+        choices = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pChoices + letter.ndxChoices, letter.cntChoices - 1)
     else:
         choices = ''
     if letter.cntSuggestions > 1:
-        suggestions = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pSuggestions + letter.ndxSuggestions,
-                                                         letter.cntSuggestions - 1)
+        suggestions = <object> PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, pSuggestions + letter.ndxSuggestions, letter.cntSuggestions - 1)
     else:
         suggestions = ''
     nb_spaces = None
@@ -588,6 +586,15 @@ class PreprocInfo:
     def __repr__(self):
         return pformat(vars(self))
 
+
+class ImageInfo:
+    def __init__(self, size, dpi, mode):
+        self.size = size
+        self.dpi = dpi
+        self.mode = mode
+
+    def __repr__(self):
+        return pformat(vars(self))
 
 @contextmanager
 def _timing(timings, name):
@@ -806,7 +813,7 @@ cdef class Page:
             rc = kRecFree(pSuggestions)
         CSDK.check_err(rc, 'kRecFree')
 
-    def _get_image(self, image_index):
+    def get_image(self, image_index):
         cdef RECERR rc
         cdef IMG_INFO img_info
         cdef LPBYTE bitmap
@@ -826,25 +833,38 @@ cdef class Page:
         if img_info.BitsPerPixel == 1:
             image = Image.frombytes('1', (img_info.BytesPerLine * 8, img_info.Size.cy), bytes, 'raw', '1;I', 0, 1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
-            image = Image.frombytes('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine,
-                                    1)
+            image = Image.frombytes('L', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'L', img_info.BytesPerLine, 1)
         elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
-            image = Image.frombytes('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine,
-                                    1)
+            image = Image.frombytes('P', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'P', img_info.BytesPerLine, 1)
             o = PyBytes_FromStringAndSize(<const char*> palette, sizeof(palette))
             palette_bytes = <object> o
             image.putpalette(palette_bytes)
         elif img_info.BitsPerPixel == 24:
-            image = Image.frombytes('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB',
-                                    img_info.BytesPerLine, 1)
+            image = Image.frombytes('RGB', (img_info.Size.cx, img_info.Size.cy), bytes, 'raw', 'RGB', img_info.BytesPerLine, 1)
         else:
             raise CSDKException('OmniPage: unsupported number of bits per pixel: {}'.format(img_info.BitsPerPixel))
-        image_dpi = (img_info.DPI.cx, img_info.DPI.cy)
-        return image_dpi, image
+        return image
 
-    def get_image(self, image_index):
-        image_dpi, image = self._get_image(image_index)
-        return image_dpi, image
+    def get_image_info(self, image_index):
+        cdef RECERR rc
+        cdef IMG_INFO img_info
+        cdef IMAGEINDEX index = image_index
+        with nogil:
+            rc = kRecGetImgInfo(self.sdk.sid, self.handle, index, &img_info)
+        CSDK.check_err(rc, 'kRecGetImgInfo')
+        size = (img_info.Size.cx, img_info.Size.cy)
+        dpi = (img_info.DPI.cx, img_info.DPI.cy)
+        if img_info.BitsPerPixel == 1:
+            mode = '1'
+        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 0:
+            mode = 'L'
+        elif img_info.BitsPerPixel == 8 and img_info.IsPalette == 1:
+            mode = 'P'
+        elif img_info.BitsPerPixel == 24:
+            mode = 'RGB'
+        else:
+            mode = 'UNKNOWN(bits={}, palette={})'.format(img_info.BitsPerPixel, img_info.IsPalette)
+        return ImageInfo(size, dpi, mode)
 
     def get_languages(self):
         cdef LANG_ENA languages[LANG_SIZE + 1]
