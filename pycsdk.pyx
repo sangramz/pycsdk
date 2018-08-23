@@ -406,7 +406,7 @@ cdef class File:
 
 class Letter:
     def __init__(self, top, left, bottom, right, font_size, cell_num, zone_id, code, space_type, nb_spaces,
-                 choices, suggestions, lang, lang2, dictionary_word, confidence, italic, bold,
+                 choices, suggestions, lang, lang2, dictionary_word, confidence, word_suspicious, italic, bold,
                  end_word, end_line, end_cell, end_row, in_cell, orientation, rtl):
         self.top = top
         self.left = left
@@ -424,6 +424,7 @@ class Letter:
         self.lang2 = lang2
         self.dictionary_word = dictionary_word
         self.confidence = confidence
+        self.word_suspicious = word_suspicious
         self.italic = italic
         self.bold = bold
         self.end_word = end_word
@@ -469,6 +470,8 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
         else:
             space_type = 'UNKNOWN_{}'.format(spc_type)
     cdef BYTE err = letter.err
+    word_suspicious = err & 0x80
+    err = err & 0x7f
     if err >= 100:
         confidence = 0
     else:
@@ -496,7 +499,7 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
     return Letter(letter.top, letter.left, letter.top + letter.height, letter.left + letter.width,
                   letter.capHeight * 100.0 / dpi,
                   letter.cellNum, letter.zone, code, space_type, nb_spaces, choices, suggestions,
-                  lang, lang2, dictionary_word, confidence,
+                  lang, lang2, dictionary_word, confidence, word_suspicious,
                   italic, bold, end_word, end_line, end_cell, end_row, in_cell, orientation, rtl)
 
 cdef zone_type(ZONETYPE type):
