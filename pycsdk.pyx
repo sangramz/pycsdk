@@ -470,7 +470,7 @@ cdef build_letter(LETTER letter, LPWCH pChoices, LPWCH pSuggestions, dpi):
         else:
             space_type = 'UNKNOWN_{}'.format(spc_type)
     cdef BYTE err = letter.err
-    word_suspicious = err & 0x80
+    word_suspicious = True if err & 0x80 else False
     err = err & 0x7f
     if err >= 100:
         confidence = 0
