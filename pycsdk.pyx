@@ -802,7 +802,7 @@ cdef class Page:
             self.letters = []
             for letter_id in range(nb_letters):
                 letter = build_letter(pLetters[letter_id], pChoices, pSuggestions, dpi_y)
-                if letter:
+                if letter and letter.zone_id < len(self.zones):
                     self.letters.append(letter)
 
         # cleanup
