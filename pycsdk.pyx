@@ -748,7 +748,7 @@ cdef class Page:
             cdef RECERR rc
             with _timing(timings, 'ocr_MakePagesSearchable'):
                 with nogil:
-                    rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, &hPage, 1, II_CURRENT)
+                    rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, self.handle, 1, II_CURRENT)
                 CSDK.check_err(rc, 'kRecMakePagesSearchable')
                 
         # retrieve OCR zones
