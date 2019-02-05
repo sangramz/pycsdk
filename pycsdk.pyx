@@ -748,7 +748,7 @@ cdef class Page:
         cdef RECERR rc
         with _timing(timings, 'ocr_get_searchablePDF'):
             with nogil:
-                rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, self.handle, l, II_CURRENT)
+                rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, self.handle, NPAGES)
             CSDK.check_err(rc, 'get_searchablePDF')
                 
         # retrieve OCR zones
