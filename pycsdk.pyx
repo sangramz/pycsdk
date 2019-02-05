@@ -744,11 +744,12 @@ cdef class Page:
                 rc = kRecRecognize(self.sdk.sid, self.handle, NULL)
             CSDK.check_err(rc, 'kRecRecognize')
             
-    def get_searchablePDF(self, timings=dict()):
+    def MakePagesSearchable(self, timings=dict()):
         cdef RECERR rc
-        with _timing(timings, 'ocr_get_searchablePDF'):
-            rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, self.handle, NPAGES)
-        CSDK.check_err(rc, 'get_searchablePDF')
+        with _timing(timings, 'ocr_MakePagesSearchable'):
+            with nogil:
+                rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, &hPage, 1, II_CURRENT)
+            CSDK.check_err(rc, 'kRecMakePagesSearchable
                 
         # retrieve OCR zones
         cdef int nb_zones
