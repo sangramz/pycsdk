@@ -747,7 +747,6 @@ cdef class Page:
     def get_searchablePDF(self, timings=dict()):
         cdef RECERR rc
         with _timing(timings, 'ocr_get_searchablePDF'):
-            with nogil:
                 rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, self.handle, NPAGES)
             CSDK.check_err(rc, 'get_searchablePDF')
                 
