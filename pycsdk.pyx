@@ -749,7 +749,7 @@ cdef class Page:
         with _timing(timings, 'ocr_MakePagesSearchable'):
             with nogil:
                 rc = kRecMakePagesSearchable(self.sdk.sid, pFilePath, i, &hPage, 1, II_CURRENT)
-            CSDK.check_err(rc, 'kRecMakePagesSearchable
+            CSDK.check_err(rc, 'kRecMakePagesSearchable')
                 
         # retrieve OCR zones
         cdef int nb_zones
